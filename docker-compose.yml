@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-coffeehub}
+      POSTGRES_USER: ${POSTGRES_USER:-coffeehub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeehub}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coffeehub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-coffeehub}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-coffeehub}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-coffeehub}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-this-secret-in-production-min-32-chars}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@coffeehub.in}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-Admin@12345}
+      SEED_ADMIN: ${SEED_ADMIN:-true}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

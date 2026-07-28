@@ -1,0 +1,33 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: coffeehub-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/coffeehub}
+    username: ${SPRING_DATASOURCE_USERNAME:coffeehub}
+    password: ${SPRING_DATASOURCE_PASSWORD:coffeehub}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+app:
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-this-secret-in-production-min-32-chars}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  seed:
+    admin-email: ${ADMIN_SEED_EMAIL:admin@coffeehub.in}
+    admin-password: ${ADMIN_SEED_PASSWORD:Admin@12345}
+    enabled: ${SEED_ADMIN:true}
+
+logging:
+  level:
+    com.coffeehub: ${LOG_LEVEL:INFO}
