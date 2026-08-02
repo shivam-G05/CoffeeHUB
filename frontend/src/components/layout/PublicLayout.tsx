@@ -23,7 +23,7 @@ export default function PublicLayout() {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-coffee-100 bg-cream-50/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="text-xl font-bold tracking-tight text-coffee-800" onClick={closeMenu}>
+          <Link to="/" className="font-serif text-xl font-bold tracking-tight text-coffee-800" onClick={closeMenu}>
             ☕ CoffeeHub <span className="text-coffee-400">India</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-coffee-700 md:flex">
@@ -140,7 +140,7 @@ export default function PublicLayout() {
       <footer className="border-t border-coffee-100 bg-coffee-900 text-cream-100">
         <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-2">
-            <p className="text-lg font-semibold text-cream-50">☕ CoffeeHub India</p>
+            <p className="font-serif text-lg font-semibold text-cream-50">☕ CoffeeHub India</p>
             <p className="mt-2 max-w-sm text-sm text-coffee-200">
               The coffee ecosystem platform — discover cafés, buy beans &amp; machines, connect with
               roasters, and grow your coffee business, all in one place.

@@ -1,7 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Segoe UI", system-ui, Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
 
   --color-coffee-50: #f8f3ee;
   --color-coffee-100: #efe1d3;
