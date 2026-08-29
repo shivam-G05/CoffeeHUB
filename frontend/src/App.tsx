@@ -23,10 +23,6 @@ import SellerOverview from "./pages/seller/Overview";
 import SellerProducts from "./pages/seller/Products";
 import SellerOrders from "./pages/seller/Orders";
 
-import CafeOwnerOverview from "./pages/cafe-owner/Overview";
-import MyCafe from "./pages/cafe-owner/MyCafe";
-import CafeOwnerReservations from "./pages/cafe-owner/Reservations";
-
 import AdminOverview from "./pages/admin/Overview";
 import AdminUsers from "./pages/admin/Users";
 import AdminProducts from "./pages/admin/Products";
@@ -100,28 +96,6 @@ export default function App() {
           <Route index element={<SellerOverview />} />
           <Route path="products" element={<SellerProducts />} />
           <Route path="orders" element={<SellerOrders />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-      </Route>
-
-      <Route element={<ProtectedRoute allow={["CAFE_OWNER"]} />}>
-        <Route
-          path="/cafe-owner"
-          element={
-            <DashboardLayout
-              title="Café Owner"
-              navItems={[
-                { to: "/cafe-owner", label: "Overview", end: true },
-                { to: "/cafe-owner/my-cafe", label: "My Café" },
-                { to: "/cafe-owner/reservations", label: "Table Bookings" },
-                { to: "/cafe-owner/profile", label: "Profile" },
-              ]}
-            />
-          }
-        >
-          <Route index element={<CafeOwnerOverview />} />
-          <Route path="my-cafe" element={<MyCafe />} />
-          <Route path="reservations" element={<CafeOwnerReservations />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Route>

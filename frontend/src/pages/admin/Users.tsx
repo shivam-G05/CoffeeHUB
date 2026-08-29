@@ -8,7 +8,6 @@ const roleFilters: { value: Role | ""; label: string }[] = [
   { value: "", label: "All roles" },
   { value: "CUSTOMER", label: "Customers" },
   { value: "SELLER", label: "Sellers" },
-  { value: "CAFE_OWNER", label: "Café Owners" },
   { value: "ADMIN", label: "Admins" },
 ];
 

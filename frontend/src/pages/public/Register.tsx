@@ -9,7 +9,6 @@ import type { Role } from "../../types";
 const roleOptions: { value: Role; label: string }[] = [
   { value: "CUSTOMER", label: "Customer — I want to buy & discover" },
   { value: "SELLER", label: "Seller — I sell machines / beans / accessories" },
-  { value: "CAFE_OWNER", label: "Café Owner — I run a café" },
 ];
 
 export default function Register() {

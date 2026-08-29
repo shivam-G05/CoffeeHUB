@@ -1,20 +1,25 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import ReactFiber from "../../components/layout/ReactFiber"
+import ReactFiber from "../../components/layout/ReactFiber";
 import {
+  ArrowRight,
   BadgeCheck,
-  CalendarClock,
   Coffee,
   Cog,
   Gift,
-  MapPin,
+  Globe,
+  GraduationCap,
+  Headphones,
+  Leaf,
+  Package,
   Recycle,
-  ScanSearch,
   ShieldCheck,
-  Sparkles,
+  Sprout,
   Star,
+  Store,
+  Tag,
   Truck,
-  UserPlus,
+  Wrench,
 } from "lucide-react";
 
 // Free-license photos from Unsplash (images.unsplash.com hotlinking is explicitly
@@ -36,329 +41,397 @@ function img(id: string, w: number, h?: number) {
   return h ? `${base}&h=${h}` : base;
 }
 
-const liveFeatures = [
-  { icon: MapPin, title: "Discover cafés", desc: "Explore cafés near you and reserve a table.", photo: PHOTOS.cafeInterior },
-  { icon: Coffee, title: "Buy coffee beans", desc: "Order beans from roasters across India.", photo: PHOTOS.beans },
-  { icon: Cog, title: "Buy coffee machines", desc: "Browse and buy espresso machines & accessories.", photo: PHOTOS.machine },
-  { icon: ScanSearch, title: "Compare & review", desc: "Side-by-side comparisons and real buyer reviews.", photo: PHOTOS.pouring },
+const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
+// ---- Category sidebar (links to the real catalog with a type pre-filter) ----
+const categories = [
+  { label: "All Categories", icon: Package, to: "/products" },
+  { label: "Coffee Beans", icon: Coffee, to: "/products?type=BEAN" },
+  { label: "Green Coffee", icon: Leaf, to: "/products?type=BEAN" },
+  { label: "Used Equipment", icon: Recycle, to: "/products?type=MACHINE" },
+  { label: "Brewing Equipment", icon: Cog, to: "/products?type=ACCESSORY" },
+  { label: "Café & Commercial", icon: Store, to: "/cafes" },
+  { label: "Accessories", icon: Wrench, to: "/products?type=ACCESSORY" },
+  { label: "Education", icon: GraduationCap, to: "/products" },
+  { label: "Deals & Offers", icon: Tag, to: "/products" },
 ];
 
-const soonFeatures = [
-  { icon: Recycle, title: "Sell used machines", desc: "List a second-hand machine and find a buyer." },
-  { icon: Truck, title: "Distributors & roasters", desc: "Connect with wholesale suppliers and importers." },
+// ---- Circular category chips ----
+const chips = [
+  { label: "Green Coffee", photo: PHOTOS.beans, to: "/products?type=BEAN" },
+  { label: "Coffee Beans", photo: PHOTOS.flatlay, to: "/products?type=BEAN" },
+  { label: "Used Equipment", photo: PHOTOS.machine, to: "/products?type=MACHINE" },
+  { label: "Brewing Gear", photo: PHOTOS.pouring, to: "/products?type=ACCESSORY" },
+  { label: "Café & Commercial", photo: PHOTOS.cafeInterior, to: "/cafes" },
+  { label: "Accessories", photo: PHOTOS.counter, to: "/products?type=ACCESSORY" },
+  { label: "Deals", photo: PHOTOS.iced, to: "/products" },
+  { label: "All", photo: PHOTOS.groupTable, to: "/products" },
 ];
 
-const trustPoints = [
-  { icon: ShieldCheck, label: "Admin-verified sellers & cafés" },
-  { icon: Star, label: "Real reviews & ratings" },
-  { icon: Gift, label: "Loyalty points on every order" },
-  { icon: BadgeCheck, label: "Built on a secure, modern stack" },
+const stats = [
+  { value: "50K+", label: "Products" },
+  { value: "10K+", label: "Sellers" },
+  { value: "100+", label: "Countries" },
 ];
 
-const steps = [
-  { icon: UserPlus, title: "Create your free account", desc: "Sign up in under a minute as a coffee lover, seller, or café owner." },
-  { icon: Coffee, title: "Discover or list", desc: "Order beans & machines, reserve a café table, or list your own products." },
-  { icon: Sparkles, title: "Earn as you go", desc: "Collect loyalty points, leave reviews, and invite friends for bonus rewards." },
+const trustBadges = [
+  { icon: BadgeCheck, title: "Verified Sellers", sub: "Trusted Quality" },
+  { icon: ShieldCheck, title: "Secure Payments", sub: "Safe & Protected" },
+  { icon: Truck, title: "Worldwide Shipping", sub: "Fast & Reliable" },
+  { icon: Gift, title: "Buyer Protection", sub: "We've Got You" },
 ];
 
-const roleCards = [
-  {
-    role: "CUSTOMER" as const,
-    title: "I'm a Coffee Lover",
-    desc: "Browse cafés, order beans & machines, and track your orders.",
-    cta: "Join as Customer",
-  },
-  {
-    role: "SELLER" as const,
-    title: "I sell Machines or Beans",
-    desc: "List products, manage stock and pricing, fulfill orders.",
-    cta: "Join as Seller",
-  },
-  {
-    role: "CAFE_OWNER" as const,
-    title: "I run a Café",
-    desc: "List your café, take table reservations, and grow your business.",
-    cta: "Join as Café Owner",
-  },
+interface SampleProduct {
+  name: string;
+  sub: string;
+  price: number;
+  unit?: string;
+  rating: number;
+  reviews: number;
+  photo: string;
+}
+
+const coffeeBeans: SampleProduct[] = [
+  { name: "Kofe Geek House Blend", sub: "Ethiopia Sidamo · 250g", price: 599, rating: 4.8, reviews: 210, photo: PHOTOS.flatlay },
+  { name: "Blue Tokai Vienna Roast", sub: "French Roast · 250g", price: 549, rating: 4.7, reviews: 173, photo: PHOTOS.beans },
+  { name: "Third Wave Signature", sub: "Bibo's Blend · 250g", price: 640, rating: 4.6, reviews: 142, photo: PHOTOS.counter },
+  { name: "Kofe Geek Espresso Blend", sub: "Dark Roast · 250g", price: 599, rating: 4.8, reviews: 230, photo: PHOTOS.iced },
 ];
 
-const galleryPhotos = [
-  { photo: PHOTOS.flatlay, alt: "Coffee cup surrounded by roasted beans" },
-  { photo: PHOTOS.iced, alt: "Iced coffee on a stone counter" },
-  { photo: PHOTOS.counter, alt: "Café counter with bags of coffee beans" },
-  { photo: PHOTOS.cafeInterior, alt: "Cozy café interior" },
+const greenCoffee: SampleProduct[] = [
+  { name: "Ethiopia Yirgacheffe G1", sub: "Washed · Floral", price: 850, unit: "/kg", rating: 4.9, reviews: 88, photo: PHOTOS.beans },
+  { name: "Colombia Supremo", sub: "Farm Direct · Caramel", price: 690, unit: "/kg", rating: 4.8, reviews: 76, photo: PHOTOS.flatlay },
+  { name: "Brazil Fazenda Rio", sub: "Natural · Chocolate", price: 550, unit: "/kg", rating: 4.7, reviews: 64, photo: PHOTOS.counter },
+  { name: "Guatemala Huehuetenango", sub: "Washed · Cocoa", price: 780, unit: "/kg", rating: 4.7, reviews: 52, photo: PHOTOS.iced },
 ];
+
+const brewingEquipment: SampleProduct[] = [
+  { name: "Timemore C2 Grinder", sub: "Manual · 38mm burr", price: 6999, rating: 4.9, reviews: 320, photo: PHOTOS.machine },
+  { name: "Hario V60 Dripper", sub: "Ceramic · Size 02", price: 1490, rating: 4.8, reviews: 254, photo: PHOTOS.pouring },
+  { name: "Breville Barista Pro", sub: "Espresso · Home", price: 54990, rating: 4.5, reviews: 118, photo: PHOTOS.machine },
+  { name: "Fellow Stagg Kettle", sub: "Pour Over · 0.9L", price: 8999, rating: 4.8, reviews: 176, photo: PHOTOS.pouring },
+];
+
+const promos = [
+  { title: "Used Equipment", sub: "Quality pre-loved. Great value.", icon: Recycle, photo: PHOTOS.machine, to: "/products?type=MACHINE" },
+  { title: "Green Coffee Trading", sub: "Direct from farms to roasters.", icon: Sprout, photo: PHOTOS.beans, to: "/products?type=BEAN" },
+  { title: "Coffee Education", sub: "Learn. Brew. Improve.", icon: GraduationCap, photo: PHOTOS.pouring, to: "/products" },
+];
+
+const trustBar = [
+  { icon: ShieldCheck, label: "100% Secure Payments" },
+  { icon: BadgeCheck, label: "Verified Sellers" },
+  { icon: Truck, label: "Worldwide Shipping" },
+  { icon: Gift, label: "Buyer Protection" },
+  { icon: Headphones, label: "24/7 Customer Support" },
+];
+
+function Stars({ rating, reviews }: { rating: number; reviews: number }) {
+  return (
+    <div className="flex items-center gap-1 text-xs text-coffee-500">
+      <Star size={12} className="fill-amber-accent text-amber-accent" />
+      <span className="font-semibold text-coffee-700">{rating.toFixed(1)}</span>
+      <span className="text-coffee-400">({reviews})</span>
+    </div>
+  );
+}
+
+function ProductCard({ p }: { p: SampleProduct }) {
+  return (
+    <Link
+      to="/products"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-coffee-100 bg-cream-50 transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div className="aspect-square overflow-hidden bg-coffee-100">
+        <img
+          src={img(p.photo, 320, 320)}
+          alt={p.name}
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        />
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <h4 className="line-clamp-1 text-sm font-semibold text-coffee-900">{p.name}</h4>
+        <p className="mt-0.5 line-clamp-1 text-xs text-coffee-400">{p.sub}</p>
+        <div className="mt-1.5">
+          <Stars rating={p.rating} reviews={p.reviews} />
+        </div>
+        <div className="mt-2 flex items-end justify-between gap-2">
+          <span className="min-w-0 truncate text-base font-bold text-coffee-900">
+            {inr(p.price)}
+            {p.unit && <span className="text-xs font-normal text-coffee-400"> {p.unit}</span>}
+          </span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-amber-accent/15 px-2.5 py-1 text-[11px] font-semibold text-coffee-700 transition group-hover:bg-amber-accent group-hover:text-coffee-900">
+            View
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function CarouselSection({
+  title,
+  items,
+  viewAll,
+}: {
+  title: string;
+  items: SampleProduct[];
+  viewAll: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-coffee-100 bg-cream-100/50 p-4 sm:p-5">
+      <div className="flex items-center justify-between">
+        <h3 className="font-serif text-lg font-bold text-coffee-900">{title}</h3>
+        <Link to={viewAll} className="flex items-center gap-1 text-xs font-semibold text-coffee-500 hover:text-coffee-800">
+          View All <ArrowRight size={13} />
+        </Link>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {items.map((p) => (
+          <ProductCard key={p.name} p={p} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden text-cream-50">
-        <div className="absolute inset-0">
-          <img
-            src={img(PHOTOS.hero, 1920)}
-            alt="Latte art coffee cup on a dark background"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-coffee-900/90 via-coffee-900/75 to-coffee-900/95" />
-        </div>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      {/* ===== Top row: sidebar · hero · rail ===== */}
+      <div className="grid gap-5 lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_300px]">
+        {/* Category sidebar */}
+        <aside className="hidden lg:block">
+          <nav className="overflow-hidden rounded-2xl border border-coffee-100 bg-cream-50">
+            {categories.map((c, i) => (
+              <Link
+                key={c.label}
+                to={c.to}
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm text-coffee-700 transition hover:bg-coffee-100/70 hover:text-coffee-900 ${
+                  i === 0 ? "bg-coffee-100/60 font-semibold" : ""
+                }`}
+              >
+                <c.icon size={16} className="text-coffee-400" />
+                {c.label}
+              </Link>
+            ))}
+          </nav>
 
-        <div className="relative mx-auto max-w-6xl px-6 py-28 text-center sm:py-32">
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-accent"
-          >
-            India&rsquo;s Coffee Ecosystem Platform
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mt-4 font-serif text-4xl font-bold leading-tight sm:text-5xl md:text-6xl"
-          >
-            Savor the perfect brew,
-            <br className="hidden sm:block" /> every single order.
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-cream-100/90"
-          >
-            Discover cafés, buy beans &amp; machines, connect with roasters, and grow your coffee
-            business — all in one elegant platform.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-4"
-          >
+          <div className="mt-4 rounded-2xl border border-coffee-100 bg-cream-50 p-4">
+            <p className="font-semibold text-coffee-900">Sell on Coffee Hub</p>
+            <p className="mt-1 text-xs text-coffee-500">
+              Reach thousands of coffee enthusiasts and businesses worldwide.
+            </p>
             <Link
-              to="/register"
-              className="rounded-full bg-amber-accent px-6 py-3 text-sm font-semibold text-coffee-900 hover:bg-amber-accent/90"
+              to="/register?role=SELLER"
+              className="mt-3 block rounded-full bg-coffee-800 px-4 py-2 text-center text-sm font-semibold text-cream-50 hover:bg-coffee-700"
             >
-              Get Started Free
+              Start Selling
             </Link>
-            <Link
-              to="/products"
-              className="rounded-full border border-cream-100/40 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-white/10"
-            >
-              Browse Beans &amp; Machines
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+          </div>
 
-      {/* Live features — elegant photo badges */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center font-serif text-3xl font-bold text-coffee-900">Everything coffee, in one place</h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-coffee-500">
-          CoffeeHub India works like a mix of a food discovery app, a B2B marketplace, and an
-          online store — built specifically for coffee.
-        </p>
-
-        <div className="mt-14 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-          {liveFeatures.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              className="flex flex-col items-center text-center"
-            >
-              <div className="relative h-28 w-28">
-                <img
-                  src={img(f.photo, 240, 240)}
-                  alt=""
-                  className="h-28 w-28 rounded-full border-4 border-cream-50 object-cover shadow-md"
-                />
-                <div className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-coffee-800 text-cream-50 shadow">
-                  <f.icon size={16} />
-                </div>
-              </div>
-              <h3 className="mt-5 font-semibold text-coffee-900">{f.title}</h3>
-              <p className="mt-1 text-sm text-coffee-500">{f.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-4">
-          {soonFeatures.map((f) => (
-            <div
-              key={f.title}
-              className="flex items-center gap-3 rounded-full border border-dashed border-coffee-200 bg-cream-50 px-5 py-2.5"
-            >
-              <f.icon size={16} className="text-coffee-400" />
-              <span className="text-sm text-coffee-500">{f.title}</span>
-              <span className="rounded-full bg-coffee-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-coffee-500">
-                Soon
+          <Link
+            to="/products?type=BEAN"
+            className="relative mt-4 block h-40 overflow-hidden rounded-2xl"
+          >
+            <img src={img(PHOTOS.beans, 400, 320)} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-coffee-900/90 to-coffee-900/20" />
+            <div className="absolute inset-x-0 bottom-0 p-4 text-cream-50">
+              <p className="font-serif text-lg font-bold leading-tight">For Every Coffee Journey</p>
+              <span className="mt-2 inline-block rounded-full bg-amber-accent px-3 py-1 text-xs font-semibold text-coffee-900">
+                Explore Now
               </span>
             </div>
-          ))}
-        </div>
-      </section>
+          </Link>
+        </aside>
 
-      {/* Why choose us — split photo panel */}
-      <section className="bg-coffee-900">
-        <div className="mx-auto grid max-w-6xl items-stretch gap-0 sm:grid-cols-2">
-          <div className="relative min-h-[22rem]">
+        {/* Hero — dark banner with the spinning 3D coffee drum */}
+        <section className="relative flex min-h-[22rem] flex-col overflow-hidden rounded-2xl bg-coffee-900 text-cream-50">
+          <div className="absolute inset-0">
             <img
-              src={img(PHOTOS.pouring, 900, 900)}
-              alt="Barista pouring latte art into a coffee cup"
-              className="absolute inset-0 h-full w-full object-cover"
+              src={img(PHOTOS.beans, 1400)}
+              alt=""
+              className="h-full w-full object-cover opacity-45"
             />
+            <div className="absolute inset-0 bg-gradient-to-r from-coffee-900 via-coffee-900/70 to-coffee-900/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-coffee-900/80 via-transparent to-transparent" />
           </div>
-          <div className="flex flex-col justify-center px-8 py-16 text-cream-50 sm:px-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-accent">Why CoffeeHub</p>
-            <h2 className="mt-3 font-serif text-3xl font-bold">Crafted for coffee people, not just marketplaces</h2>
-            <p className="mt-4 text-coffee-200">
-              Every seller and café on CoffeeHub is admin-verified before going live. Every order
-              earns loyalty points. Every review comes from a real buyer.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {trustPoints.map((t) => (
-                <li key={t.label} className="flex items-center gap-3 text-sm text-cream-100">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-accent/15">
-                    <t.icon size={15} className="text-amber-accent" />
-                  </span>
-                  {t.label}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/register"
-              className="mt-8 inline-block w-fit rounded-full bg-amber-accent px-6 py-3 text-sm font-semibold text-coffee-900 hover:bg-amber-accent/90"
-            >
-              Join CoffeeHub
-            </Link>
-          </div>
-        </div>
-      </section>
 
-      {/* Gallery */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center font-serif text-3xl font-bold text-coffee-900">The coffee ritual</h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-coffee-500">
-          From the first roast to the last sip — a platform built around the moments coffee
-          creates.
-        </p>
-        <div className="mt-12 flex justify-center">
-            {/* {galleryPhotos.map((g, i) => (
-              <motion.div
-                key={g.photo}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="aspect-[3/4] overflow-hidden rounded-2xl"
+          <div className="relative flex flex-1 flex-col justify-center gap-6 p-8 sm:p-12 md:flex-row md:items-center">
+            <div className="max-w-md">
+              <motion.h1
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="font-serif text-4xl font-bold leading-tight sm:text-5xl"
               >
-                <img
-                  src={img(g.photo, 500, 650)}
-                  alt={g.alt}
-                  className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                />
-              </motion.div>
-            ))} */}
-            <div className="aspect-square w-full max-w-md overflow-hidden rounded-2xl">
+                Everything Coffee.
+                <br />
+                <span className="text-amber-accent">Everywhere.</span>
+              </motion.h1>
+              <p className="mt-4 max-w-sm text-sm text-cream-100/85 sm:text-base">
+                The world&rsquo;s marketplace for coffee lovers, roasters, and businesses — from farm
+                to cup.
+              </p>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link
+                  to="/products"
+                  className="rounded-full bg-amber-accent px-6 py-3 text-sm font-semibold text-coffee-900 hover:bg-amber-accent/90"
+                >
+                  Shop Now
+                </Link>
+                <Link
+                  to="/products?type=BEAN"
+                  className="rounded-full border border-cream-100/40 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-white/10"
+                >
+                  Explore Green Coffee
+                </Link>
+              </div>
+            </div>
+
+            {/* 3D spinning coffee drum */}
+            <div className="hidden aspect-square w-full max-w-[18rem] shrink-0 md:block">
               <ReactFiber />
             </div>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* How it works */}
-      <section className="bg-coffee-100/60 py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="text-center font-serif text-3xl font-bold text-coffee-900">How it works</h2>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {steps.map((s, i) => (
-              <motion.div
-                key={s.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="relative rounded-2xl bg-cream-50 p-6 text-center shadow-sm"
+        {/* Right rail — stats · trust · newsletter */}
+        <aside className="hidden xl:block">
+          <div className="relative overflow-hidden rounded-2xl bg-coffee-800 p-5 text-cream-50">
+            <img
+              src={img(PHOTOS.cafeInterior, 400, 300)}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-20"
+            />
+            <div className="relative">
+              <p className="text-sm font-semibold">Connecting Every Part of the Coffee World</p>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                {stats.map((s) => (
+                  <div key={s.label}>
+                    <p className="font-serif text-xl font-bold text-amber-accent">{s.value}</p>
+                    <p className="text-[11px] text-cream-100/80">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-coffee-100 bg-cream-50 p-4">
+            {trustBadges.map((b, i) => (
+              <div
+                key={b.title}
+                className={`flex items-center gap-3 py-2.5 ${i > 0 ? "border-t border-coffee-100" : ""}`}
               >
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-coffee-800 text-cream-50">
-                  <s.icon size={22} />
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-accent/15">
+                  <b.icon size={16} className="text-amber-accent" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-coffee-900">{b.title}</p>
+                  <p className="text-xs text-coffee-400">{b.sub}</p>
                 </div>
-                <p className="mt-4 text-xs font-bold uppercase tracking-wide text-coffee-400">Step {i + 1}</p>
-                <h3 className="mt-1 font-semibold text-coffee-900">{s.title}</h3>
-                <p className="mt-2 text-sm text-coffee-500">{s.desc}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Built for every role */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center font-serif text-3xl font-bold text-coffee-900">Built for every role</h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-coffee-500">
-          Whether you drink coffee, sell it, or serve it — CoffeeHub has a dashboard for you.
-        </p>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {roleCards.map((r) => (
-            <div key={r.role} className="rounded-2xl border border-coffee-100 bg-cream-50 p-6 shadow-sm transition hover:shadow-md">
-              <h3 className="text-lg font-semibold text-coffee-900">{r.title}</h3>
-              <p className="mt-2 text-sm text-coffee-500">{r.desc}</p>
-              <Link
-                to={`/register?role=${r.role}`}
-                className="mt-5 inline-block rounded-full bg-coffee-800 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-coffee-700"
-              >
-                {r.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
+          <div className="mt-4 rounded-2xl bg-coffee-900 p-5 text-cream-50">
+            <p className="font-semibold">Stay in the Loop</p>
+            <p className="mt-1 text-xs text-cream-100/80">
+              Get the latest on coffee, deals and industry insights.
+            </p>
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="mt-3 flex overflow-hidden rounded-full bg-cream-50"
+            >
+              <input
+                type="email"
+                required
+                placeholder="Enter your email"
+                className="min-w-0 flex-1 bg-transparent px-4 py-2 text-sm text-coffee-900 outline-none placeholder:text-coffee-400"
+              />
+              <button className="bg-amber-accent px-4 text-coffee-900" aria-label="Subscribe">
+                <ArrowRight size={16} />
+              </button>
+            </form>
+          </div>
+        </aside>
+      </div>
 
-      {/* Pro membership teaser — photo banner */}
-      <section className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl px-0 py-0 sm:mx-6 sm:my-16 lg:mx-auto">
-        <div className="relative">
-          <img
-            src={img(PHOTOS.groupTable, 1600, 700)}
-            alt="Friends sharing coffee at a table"
-            className="h-72 w-full object-cover sm:h-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-coffee-900/95 via-coffee-900/80 to-coffee-900/40" />
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-lg px-8 text-cream-50 sm:px-14">
-              <p className="inline-block rounded-full bg-amber-accent/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-accent">
-                Coming soon
-              </p>
-              <h3 className="mt-3 flex items-center gap-2 font-serif text-2xl font-bold sm:text-3xl">
-                <CalendarClock size={26} className="text-amber-accent" />
-                CoffeeHub Pro Membership
-              </h3>
-              <p className="mt-2 text-sm text-coffee-200 sm:text-base">
-                Priority deals, faster delivery, exclusive offers and premium machine demos — for
-                members who live and breathe coffee.
-              </p>
-              <Link
-                to="/register"
-                className="mt-6 inline-block rounded-full bg-cream-50 px-5 py-2.5 text-sm font-semibold text-coffee-900 hover:bg-cream-200"
-              >
-                Get early access
-              </Link>
+      {/* ===== Category chips ===== */}
+      <div className="mt-6 grid grid-cols-4 gap-3 rounded-2xl border border-coffee-100 bg-cream-50 p-4 sm:grid-cols-8">
+        {chips.map((c) => (
+          <Link key={c.label} to={c.to} className="group flex flex-col items-center gap-2 text-center">
+            <span className="h-14 w-14 overflow-hidden rounded-full border border-coffee-100 bg-coffee-100">
+              <img
+                src={img(c.photo, 120, 120)}
+                alt=""
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
+              />
+            </span>
+            <span className="text-[11px] font-medium text-coffee-600 group-hover:text-coffee-900">
+              {c.label}
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      {/* ===== Product carousels ===== */}
+      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+        <CarouselSection title="Coffee Beans" items={coffeeBeans} viewAll="/products?type=BEAN" />
+        <CarouselSection title="Green Coffee" items={greenCoffee} viewAll="/products?type=BEAN" />
+        <CarouselSection title="Brewing Equipment" items={brewingEquipment} viewAll="/products?type=ACCESSORY" />
+      </div>
+
+      {/* ===== Promo banner cards ===== */}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {promos.map((p) => (
+          <Link
+            key={p.title}
+            to={p.to}
+            className="group relative flex h-44 flex-col justify-end overflow-hidden rounded-2xl p-5 text-cream-50"
+          >
+            <img
+              src={img(p.photo, 500, 400)}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-coffee-900/95 via-coffee-900/60 to-coffee-900/20" />
+            <div className="relative">
+              <p.icon size={22} className="text-amber-accent" />
+              <h3 className="mt-2 font-serif text-lg font-bold">{p.title}</h3>
+              <p className="text-xs text-cream-100/80">{p.sub}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-accent">
+                Explore Now <ArrowRight size={13} />
+              </span>
             </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* ===== Trust bar ===== */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 rounded-2xl border border-coffee-100 bg-cream-100/60 px-6 py-5">
+        {trustBar.map((t) => (
+          <div key={t.label} className="flex items-center gap-2 text-sm font-medium text-coffee-600">
+            <t.icon size={18} className="text-amber-accent" />
+            {t.label}
+          </div>
+        ))}
+      </div>
+
+      {/* ===== Global network CTA ===== */}
+      <section className="mt-6 flex flex-col items-center gap-4 rounded-2xl bg-coffee-900 px-6 py-12 text-center text-cream-50 sm:flex-row sm:justify-between sm:text-left">
+        <div className="flex items-center gap-4">
+          <Globe size={40} className="shrink-0 text-amber-accent" />
+          <div>
+            <h2 className="font-serif text-2xl font-bold">Join the global coffee community</h2>
+            <p className="mt-1 text-sm text-cream-100/80">
+              It&rsquo;s free to join — buy, sell and discover coffee in under a minute.
+            </p>
           </div>
         </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="mx-auto max-w-6xl px-6 py-20 text-center">
-        <h2 className="font-serif text-3xl font-bold text-coffee-900">Ready to join the coffee ecosystem?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-coffee-500">
-          It&rsquo;s free to join. Set up your account in under a minute.
-        </p>
         <Link
           to="/register"
-          className="mt-8 inline-block rounded-full bg-coffee-800 px-8 py-3 text-sm font-semibold text-cream-50 hover:bg-coffee-700"
+          className="shrink-0 rounded-full bg-amber-accent px-8 py-3 text-sm font-semibold text-coffee-900 hover:bg-amber-accent/90"
         >
           Get Started Free
         </Link>

@@ -18,7 +18,6 @@ export default function AdminOverview() {
   const userChartData = [
     { name: "Customers", count: stats.totalCustomers },
     { name: "Sellers", count: stats.totalSellers },
-    { name: "Café Owners", count: stats.totalCafeOwners },
   ];
 
   return (

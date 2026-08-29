@@ -31,15 +31,9 @@ public class ReservationController {
         return reservationService.mine(customer);
     }
 
-    @GetMapping("/cafe")
-    @PreAuthorize("hasRole('CAFE_OWNER')")
-    public List<ReservationDto> forCafeOwner(@AuthenticationPrincipal User owner) {
-        return reservationService.forCafeOwner(owner);
-    }
-
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('CAFE_OWNER','ADMIN')")
-    public ReservationDto updateStatus(@AuthenticationPrincipal User requester, @PathVariable Long id, @Valid @RequestBody UpdateReservationStatusRequest request) {
-        return reservationService.updateStatus(requester, id, request);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ReservationDto updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateReservationStatusRequest request) {
+        return reservationService.updateStatus(id, request);
     }
 }

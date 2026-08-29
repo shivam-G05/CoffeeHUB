@@ -1,4 +1,4 @@
-export type Role = "CUSTOMER" | "SELLER" | "CAFE_OWNER" | "ADMIN";
+export type Role = "CUSTOMER" | "SELLER" | "ADMIN";
 
 export interface User {
   id: number;
@@ -68,7 +68,6 @@ export interface Order {
 export interface AdminStats {
   totalCustomers: number;
   totalSellers: number;
-  totalCafeOwners: number;
   totalProducts: number;
   pendingProductApprovals: number;
   totalCafes: number;

@@ -46,20 +46,9 @@ public class ReservationService {
                 .stream().map(ReservationDto::from).toList();
     }
 
-    public List<ReservationDto> forCafeOwner(User owner) {
-        return reservationRepository.findByCafe_OwnerOrderByReservationDateDescReservationTimeDesc(owner)
-                .stream().map(ReservationDto::from).toList();
-    }
-
-    public ReservationDto updateStatus(User requester, Long id, UpdateReservationStatusRequest request) {
+    public ReservationDto updateStatus(Long id, UpdateReservationStatusRequest request) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Reservation not found"));
-
-        boolean isAdmin = requester.getRole().name().equals("ADMIN");
-        boolean isCafeOwner = reservation.getCafe().getOwner().getId().equals(requester.getId());
-        if (!isAdmin && !isCafeOwner) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You cannot update this reservation");
-        }
 
         reservation.setStatus(request.status());
         return ReservationDto.from(reservationRepository.save(reservation));

@@ -7,5 +7,4 @@ import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     List<Reservation> findByCustomerOrderByReservationDateDescReservationTimeDesc(User customer);
-    List<Reservation> findByCafe_OwnerOrderByReservationDateDescReservationTimeDesc(User owner);
 }

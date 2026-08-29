@@ -40,7 +40,6 @@ public class AdminService {
         return new AdminStatsDto(
                 userRepository.findByRole(Role.CUSTOMER).size(),
                 userRepository.findByRole(Role.SELLER).size(),
-                userRepository.findByRole(Role.CAFE_OWNER).size(),
                 productRepository.count(),
                 productRepository.findAll().stream().filter(p -> !p.isApproved()).count(),
                 cafeRepository.count(),

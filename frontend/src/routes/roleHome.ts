@@ -6,8 +6,6 @@ export function dashboardHome(role: Role): string {
       return "/customer";
     case "SELLER":
       return "/seller";
-    case "CAFE_OWNER":
-      return "/cafe-owner";
     case "ADMIN":
       return "/admin";
     default:

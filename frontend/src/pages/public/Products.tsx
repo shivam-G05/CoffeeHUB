@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Coffee, Cog, Scale, Wrench } from "lucide-react";
 import { api, apiErrorMessage } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -22,15 +22,33 @@ const typeIcon: Record<string, typeof Coffee> = {
   ACCESSORY: Wrench,
 };
 
+const VALID_TYPES: ProductType[] = ["BEAN", "MACHINE", "ACCESSORY"];
+
 export default function Products() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
-  const [type, setType] = useState<ProductType | "">("");
   const [loading, setLoading] = useState(true);
   const [orderingId, setOrderingId] = useState<number | null>(null);
   const [compareIds, setCompareIds] = useState<number[]>([]);
+
+  // Filters are driven by the URL so nav/category links and search are shareable.
+  const typeParam = searchParams.get("type");
+  const type: ProductType | "" = VALID_TYPES.includes(typeParam as ProductType)
+    ? (typeParam as ProductType)
+    : "";
+  const query = searchParams.get("q")?.trim().toLowerCase() ?? "";
+
+  function setType(next: ProductType | "") {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (next) p.set("type", next);
+      else p.delete("type");
+      return p;
+    });
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -39,6 +57,17 @@ export default function Products() {
       .then((res) => setProducts(res.data))
       .finally(() => setLoading(false));
   }, [type]);
+
+  const visibleProducts = useMemo(() => {
+    if (!query) return products;
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        (p.description?.toLowerCase().includes(query) ?? false) ||
+        (p.category?.toLowerCase().includes(query) ?? false) ||
+        p.sellerName.toLowerCase().includes(query),
+    );
+  }, [products, query]);
 
   async function orderNow(product: Product) {
     if (!user) {
@@ -76,7 +105,11 @@ export default function Products() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 pb-28">
       <h1 className="text-3xl font-bold text-coffee-900">Beans &amp; Machines</h1>
-      <p className="mt-1 text-coffee-500">Buy coffee beans, machines and accessories from verified sellers.</p>
+      <p className="mt-1 text-coffee-500">
+        {query
+          ? `Showing results for “${query}”`
+          : "Buy coffee beans, machines and accessories from verified sellers."}
+      </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
         {typeFilters.map((f) => (
@@ -94,11 +127,15 @@ export default function Products() {
 
       {loading ? (
         <p className="mt-10 text-coffee-400">Loading products…</p>
-      ) : products.length === 0 ? (
-        <p className="mt-10 text-coffee-400">No approved products yet — check back soon.</p>
+      ) : visibleProducts.length === 0 ? (
+        <p className="mt-10 text-coffee-400">
+          {query
+            ? `No products match “${query}”.`
+            : "No approved products yet — check back soon."}
+        </p>
       ) : (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => {
+          {visibleProducts.map((p) => {
             const Icon = typeIcon[p.type] ?? Coffee;
             return (
               <div key={p.id} className="flex flex-col rounded-2xl border border-coffee-100 bg-cream-50 p-5 shadow-sm transition hover:shadow-md">

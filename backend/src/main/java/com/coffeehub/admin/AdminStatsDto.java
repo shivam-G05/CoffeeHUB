@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 public record AdminStatsDto(
         long totalCustomers,
         long totalSellers,
-        long totalCafeOwners,
         long totalProducts,
         long pendingProductApprovals,
         long totalCafes,
