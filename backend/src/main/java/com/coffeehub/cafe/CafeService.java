@@ -2,6 +2,8 @@ package com.coffeehub.cafe;
 
 import com.coffeehub.cafe.dto.CafeDto;
 import com.coffeehub.common.ApiException;
+import com.coffeehub.user.Role;
+import com.coffeehub.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,8 +26,22 @@ public class CafeService {
         return cafes.stream().map(CafeDto::from).toList();
     }
 
-    public CafeDto get(Long id) {
-        return CafeDto.from(findOrThrow(id));
+    public CafeDto get(Long id, User viewer) {
+        Cafe cafe = findOrThrow(id);
+        if (!cafe.isApproved() && !canView(cafe, viewer)) {
+            // 404 rather than 403 so an unapproved listing's existence isn't revealed to strangers.
+            throw new ApiException(HttpStatus.NOT_FOUND, "Cafe not found");
+        }
+        return CafeDto.from(cafe);
+    }
+
+    private boolean canView(Cafe cafe, User viewer) {
+        if (viewer == null) {
+            return false;
+        }
+        boolean isOwner = cafe.getOwner().getId().equals(viewer.getId());
+        boolean isAdmin = viewer.getRole() == Role.ADMIN;
+        return isOwner || isAdmin;
     }
 
     public CafeDto setApproved(Long id, boolean approved) {

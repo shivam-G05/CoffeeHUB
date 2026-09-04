@@ -7,11 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
-        @NotBlank String name,
-        @NotBlank @Email String email,
-        @NotBlank @Size(min = 6, message = "must be at least 6 characters") String password,
-        String phone,
+        @NotBlank @Size(max = 255) String name,
+        @NotBlank @Email @Size(max = 255) String email,
+        @NotBlank @Size(min = 8, message = "must be at least 8 characters") String password,
+        @Size(max = 30) String phone,
         @NotNull Role role,
-        String referralCode
+        @Size(max = 20) String referralCode
 ) {
 }

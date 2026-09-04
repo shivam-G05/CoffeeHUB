@@ -3,6 +3,7 @@ package com.coffeehub.product;
 import com.coffeehub.common.ApiException;
 import com.coffeehub.product.dto.ProductDto;
 import com.coffeehub.product.dto.ProductRequest;
+import com.coffeehub.user.Role;
 import com.coffeehub.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,22 @@ public class ProductService {
         return products.stream().map(ProductDto::from).toList();
     }
 
-    public ProductDto get(Long id) {
-        return ProductDto.from(findOrThrow(id));
+    public ProductDto get(Long id, User viewer) {
+        Product product = findOrThrow(id);
+        if (!product.isApproved() && !canView(product, viewer)) {
+            // 404 rather than 403 so an unapproved listing's existence isn't revealed to strangers.
+            throw new ApiException(HttpStatus.NOT_FOUND, "Product not found");
+        }
+        return ProductDto.from(product);
+    }
+
+    private boolean canView(Product product, User viewer) {
+        if (viewer == null) {
+            return false;
+        }
+        boolean isOwner = product.getSeller().getId().equals(viewer.getId());
+        boolean isAdmin = viewer.getRole() == Role.ADMIN;
+        return isOwner || isAdmin;
     }
 
     public List<ProductDto> mine(User seller) {

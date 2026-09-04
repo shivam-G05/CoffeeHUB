@@ -30,8 +30,8 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductDto get(@PathVariable Long id) {
-        return productService.get(id);
+    public ProductDto get(@PathVariable Long id, @AuthenticationPrincipal User viewer) {
+        return productService.get(id, viewer);
     }
 
     @PostMapping

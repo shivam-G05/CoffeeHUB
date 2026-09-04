@@ -1,8 +1,10 @@
 package com.coffeehub.cafe;
 
 import com.coffeehub.cafe.dto.CafeDto;
+import com.coffeehub.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +22,8 @@ public class CafeController {
     }
 
     @GetMapping("/{id}")
-    public CafeDto get(@PathVariable Long id) {
-        return cafeService.get(id);
+    public CafeDto get(@PathVariable Long id, @AuthenticationPrincipal User viewer) {
+        return cafeService.get(id, viewer);
     }
 
     @PutMapping("/{id}/approve")

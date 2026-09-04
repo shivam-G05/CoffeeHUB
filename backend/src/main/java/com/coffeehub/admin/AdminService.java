@@ -57,6 +57,9 @@ public class AdminService {
     public UserDto toggleUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.getRole() == Role.ADMIN) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Admin accounts cannot be disabled");
+        }
         user.setEnabled(!user.isEnabled());
         return UserDto.from(userRepository.save(user));
     }

@@ -1,6 +1,8 @@
 package com.coffeehub.user;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,15 +20,16 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public UserDto updateMe(@AuthenticationPrincipal User user, @RequestBody UpdateProfileRequest req) {
-        if (req.name() != null && !req.name().isBlank()) {
-            user.setName(req.name());
-        }
+    public UserDto updateMe(@AuthenticationPrincipal User user, @Valid @RequestBody UpdateProfileRequest req) {
+        user.setName(req.name());
         if (req.phone() != null) {
             user.setPhone(req.phone());
         }
         return UserDto.from(userRepository.save(user));
     }
 
-    public record UpdateProfileRequest(@NotBlank String name, String phone) {}
+    public record UpdateProfileRequest(
+            @NotBlank @Size(max = 255) String name,
+            @Size(max = 30) String phone
+    ) {}
 }
