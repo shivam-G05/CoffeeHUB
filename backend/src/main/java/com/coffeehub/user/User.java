@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -50,6 +51,18 @@ public class User implements UserDetails {
 
     @Builder.Default
     private int loyaltyPoints = 0;
+
+    // Optional B2B buyer profile
+    private String companyName;
+    private String gstNumber;
+    private String businessType;
+
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    @Builder.Default
+    private boolean emailVerified = false;
+
+    private Instant lastLoginAt;
 
     @Builder.Default
     private Instant createdAt = Instant.now();

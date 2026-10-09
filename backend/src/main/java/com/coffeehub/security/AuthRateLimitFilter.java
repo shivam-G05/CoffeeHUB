@@ -22,7 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
-    private static final Set<String> LIMITED_PATHS = Set.of("/api/auth/login", "/api/auth/register");
+    private static final Set<String> LIMITED_PATHS = Set.of(
+            "/api/auth/login", "/api/auth/register", "/api/auth/register-seller",
+            "/api/auth/forgot-password", "/api/auth/reset-password", "/api/auth/resend-verification");
     private static final int MAX_REQUESTS_PER_WINDOW = 10;
     private static final long WINDOW_MS = 60_000;
     private static final int MAX_TRACKED_IPS = 10_000;

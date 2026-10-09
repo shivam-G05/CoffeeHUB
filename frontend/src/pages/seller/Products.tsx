@@ -1,206 +1,152 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, apiErrorMessage } from "../../api/client";
-import type { Product, ProductType } from "../../types";
-import Button from "../../components/ui/Button";
+import { useToast } from "../../context/ToastContext";
+import { money } from "../../lib/format";
+import type { Product, VendorProfile } from "../../types";
 import Badge from "../../components/ui/Badge";
-import { StarRating } from "../../components/ui/StarRating";
-import { Field, Input, Select, Textarea } from "../../components/ui/Input";
+import { productPath } from "../../components/ui/ProductCard";
+import { EmptyState, ErrorNote, Img, PageHeader, SkeletonRows } from "../../components/ui/Common";
 
-interface FormState {
-  id?: number;
-  name: string;
-  description: string;
-  price: string;
-  type: ProductType;
-  category: string;
-  stock: string;
-  imageUrl: string;
-}
+const addLink = (
+  <Link to="/seller/products/new" className="inline-flex items-center rounded-full bg-coffee-800 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-coffee-700">
+    + Add product
+  </Link>
+);
 
-const emptyForm: FormState = {
-  name: "",
-  description: "",
-  price: "",
-  type: "BEAN",
-  category: "",
-  stock: "0",
-  imageUrl: "",
-};
+const actionClass = "text-sm font-semibold hover:underline disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function SellerProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [vendor, setVendor] = useState<VendorProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [rowError, setRowError] = useState<{ id: number; message: string } | null>(null);
 
-  function load() {
-    setLoading(true);
+  useEffect(() => {
     api
       .get<Product[]>("/api/products/mine")
       .then((res) => setProducts(res.data))
-      .finally(() => setLoading(false));
-  }
+      .catch((err) => setError(apiErrorMessage(err, "Could not load your products")));
+    api
+      .get<VendorProfile>("/api/vendor/me")
+      .then((res) => setVendor(res.data))
+      .catch(() => undefined);
+  }, []);
 
-  useEffect(load, []);
-
-  function startCreate() {
-    setForm(emptyForm);
-    setShowForm(true);
-    setError(null);
-  }
-
-  function startEdit(p: Product) {
-    setForm({
-      id: p.id,
-      name: p.name,
-      description: p.description ?? "",
-      price: String(p.price),
-      type: p.type,
-      category: p.category ?? "",
-      stock: String(p.stock),
-      imageUrl: p.imageUrl ?? "",
-    });
-    setShowForm(true);
-    setError(null);
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    const payload = {
-      name: form.name,
-      description: form.description,
-      price: Number(form.price),
-      type: form.type,
-      category: form.category,
-      stock: Number(form.stock),
-      imageUrl: form.imageUrl,
-    };
+  async function act(product: Product, action: "submit" | "unpublish", done: string) {
+    setBusyId(product.id);
+    setRowError(null);
     try {
-      if (form.id) {
-        await api.put(`/api/products/${form.id}`, payload);
-      } else {
-        await api.post("/api/products", payload);
-      }
-      setShowForm(false);
-      load();
+      const res = await api.post<Product>(`/api/products/${product.id}/${action}`);
+      setProducts((list) => list?.map((p) => (p.id === product.id ? res.data : p)) ?? null);
+      showToast(done, "success");
     } catch (err) {
-      setError(apiErrorMessage(err, "Could not save product"));
+      setRowError({ id: product.id, message: apiErrorMessage(err, "Could not update the product") });
     } finally {
-      setSaving(false);
+      setBusyId(null);
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this product?")) return;
-    await api.delete(`/api/products/${id}`);
-    load();
+  async function remove(product: Product) {
+    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
+    setBusyId(product.id);
+    setRowError(null);
+    try {
+      await api.delete(`/api/products/${product.id}`);
+      setProducts((list) => list?.filter((p) => p.id !== product.id) ?? null);
+      showToast("Product deleted", "success");
+    } catch (err) {
+      setRowError({ id: product.id, message: apiErrorMessage(err, "Could not delete the product") });
+    } finally {
+      setBusyId(null);
+    }
   }
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-coffee-900">My Products</h1>
-        <Button onClick={startCreate}>+ Add product</Button>
-      </div>
+      <PageHeader title="Products" subtitle="Listings go live after an admin approves them." action={addLink} />
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 grid gap-4 rounded-2xl border border-coffee-100 bg-cream-50 p-6 sm:grid-cols-2"
-        >
-          <Field label="Product name">
-            <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </Field>
-          <Field label="Type">
-            <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as ProductType })}>
-              <option value="BEAN">Bean</option>
-              <option value="MACHINE">Machine</option>
-              <option value="ACCESSORY">Accessory</option>
-            </Select>
-          </Field>
-          <Field label="Category">
-            <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Espresso Machine" />
-          </Field>
-          <Field label="Price (₹)">
-            <Input type="number" min="0" step="0.01" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-          </Field>
-          <Field label="Stock">
-            <Input type="number" min="0" required value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-          </Field>
-          <Field label="Image URL (optional)">
-            <Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://…" />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Description">
-              <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            </Field>
-          </div>
-
-          {error && <p className="text-sm text-red-600 sm:col-span-2">{error}</p>}
-
-          <div className="flex gap-3 sm:col-span-2">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving…" : "Save product"}
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-              Cancel
-            </Button>
-          </div>
-          <p className="text-xs text-coffee-400 sm:col-span-2">
-            New or edited products need admin approval before they appear publicly.
-          </p>
-        </form>
+      {vendor && vendor.status !== "APPROVED" && (
+        <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Your business is not verified yet. You can draft products now, but they can only be submitted for review after verification.{" "}
+          <Link to="/seller/verification" className="font-semibold underline">
+            Check verification status
+          </Link>
+        </p>
       )}
 
-      {loading ? (
-        <p className="mt-8 text-coffee-400">Loading…</p>
-      ) : products.length === 0 ? (
-        <p className="mt-8 text-coffee-400">You haven&rsquo;t listed any products yet.</p>
-      ) : (
-        <div className="mt-8 overflow-x-auto rounded-2xl border border-coffee-100 bg-cream-50">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-coffee-100 text-coffee-600">
-              <tr>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Price</th>
-                <th className="px-4 py-3">Stock</th>
-                <th className="px-4 py-3">Rating</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-coffee-100">
-              {products.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-4 py-3 font-medium text-coffee-900">{p.name}</td>
-                  <td className="px-4 py-3 text-coffee-500">{p.type}</td>
-                  <td className="px-4 py-3 text-coffee-500">₹{p.price.toLocaleString("en-IN")}</td>
-                  <td className="px-4 py-3 text-coffee-500">{p.stock}</td>
-                  <td className="px-4 py-3">
-                    <StarRating rating={p.avgRating} count={p.reviewCount} size={12} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge tone={p.approved ? "approved" : "pending"}>{p.approved ? "Approved" : "Pending"}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => startEdit(p)} className="mr-3 text-coffee-700 hover:underline">
+      <div className="mt-6">
+        {error ? (
+          <ErrorNote>{error}</ErrorNote>
+        ) : products === null ? (
+          <SkeletonRows />
+        ) : products.length === 0 ? (
+          <EmptyState title="No products yet" hint="Add your first product, save it as a draft and submit it for review when it is ready." action={addLink} />
+        ) : (
+          <ul className="space-y-3">
+            {products.map((p) => {
+              const busy = busyId === p.id;
+              return (
+                <li key={p.id} className="rounded-2xl border border-coffee-100 bg-cream-50 p-4 shadow-sm">
+                  <div className="flex gap-4">
+                    <Img src={p.imageUrl} alt={p.name} className="h-16 w-16 shrink-0 rounded-lg sm:h-20 sm:w-20" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="min-w-0 break-words font-semibold text-coffee-900">{p.name}</p>
+                        <Badge>{p.status}</Badge>
+                      </div>
+                      <p className="mt-0.5 text-xs text-coffee-500">{p.categoryName ?? "No category"}</p>
+                      <p className="mt-1 text-sm text-coffee-700">
+                        {money(p.price)}
+                        {p.priceUnit ? ` / ${p.priceUnit}` : ""} · Stock: {p.stock}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(p.status === "REJECTED" || p.status === "SUSPENDED") && p.rejectionReason && (
+                    <p className="mt-3 whitespace-pre-wrap rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                      <span className="font-semibold">{p.status === "REJECTED" ? "Rejected: " : "Suspended: "}</span>
+                      {p.rejectionReason}
+                    </p>
+                  )}
+
+                  {rowError?.id === p.id && (
+                    <div className="mt-3">
+                      <ErrorNote>{rowError.message}</ErrorNote>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 border-t border-coffee-100 pt-3">
+                    <Link to={`/seller/products/${p.id}/edit`} className={`${actionClass} text-coffee-700`}>
                       Edit
-                    </button>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:underline">
+                    </Link>
+                    {(p.status === "DRAFT" || p.status === "REJECTED") && (
+                      <button onClick={() => act(p, "submit", "Submitted for review")} disabled={busy} className={`${actionClass} text-coffee-700`}>
+                        {busy ? "Working…" : "Submit for review"}
+                      </button>
+                    )}
+                    {(p.status === "PENDING" || p.status === "APPROVED" || p.status === "OUT_OF_STOCK") && (
+                      <button onClick={() => act(p, "unpublish", "Product unpublished")} disabled={busy} className={`${actionClass} text-coffee-700`}>
+                        {busy ? "Working…" : "Unpublish"}
+                      </button>
+                    )}
+                    {(p.status === "APPROVED" || p.status === "OUT_OF_STOCK") && (
+                      <Link to={productPath(p)} className={`${actionClass} text-coffee-700`}>
+                        View
+                      </Link>
+                    )}
+                    <button onClick={() => remove(p)} disabled={busy} className={`${actionClass} text-red-600`}>
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

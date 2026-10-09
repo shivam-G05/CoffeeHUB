@@ -28,7 +28,7 @@ export default function CompareMachines() {
 
   const rows: { label: string; render: (p: Product) => string | number }[] = [
     { label: "Price", render: (p) => `₹${p.price.toLocaleString("en-IN")}` },
-    { label: "Category", render: (p) => p.category ?? "—" },
+    { label: "Category", render: (p) => p.categoryName ?? "—" },
     { label: "Rating", render: (p) => (p.avgRating > 0 ? `${p.avgRating.toFixed(1)} / 5 (${p.reviewCount})` : "No reviews yet") },
     { label: "Stock", render: (p) => (p.stock > 0 ? `${p.stock} available` : "Out of stock") },
     { label: "Seller", render: (p) => p.sellerName },

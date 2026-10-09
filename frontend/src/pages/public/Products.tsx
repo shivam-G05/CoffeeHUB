@@ -1,202 +1,366 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Coffee, Cog, Scale, Wrench } from "lucide-react";
-import { api, apiErrorMessage } from "../../api/client";
-import { useAuth } from "../../context/AuthContext";
-import { useToast } from "../../context/ToastContext";
-import type { Product, ProductType } from "../../types";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, SlidersHorizontal, X } from "lucide-react";
+import { api, apiErrorMessage, track } from "../../api/client";
+import { useBrand } from "../../context/BrandContext";
+import { label } from "../../lib/format";
+import { useSeo } from "../../lib/seo";
+import type { AttributeDef, Category, Page, Product } from "../../types";
 import Button from "../../components/ui/Button";
-import { StarRating } from "../../components/ui/StarRating";
-import WishlistHeart from "../../components/ui/WishlistHeart";
+import { EmptyState, ErrorNote, Pagination, SkeletonGrid } from "../../components/ui/Common";
+import { Field, Input, Select } from "../../components/ui/Input";
+import ProductCard from "../../components/ui/ProductCard";
 
-const typeFilters: { value: ProductType | ""; label: string }[] = [
-  { value: "", label: "All" },
-  { value: "BEAN", label: "Beans" },
-  { value: "MACHINE", label: "Machines" },
-  { value: "ACCESSORY", label: "Accessories" },
+const SORTS = [
+  { value: "", label: "Newest" },
+  { value: "price_asc", label: "Price: low to high" },
+  { value: "price_desc", label: "Price: high to low" },
+  { value: "rating", label: "Top rated" },
 ];
 
-const typeIcon: Record<string, typeof Coffee> = {
-  BEAN: Coffee,
-  MACHINE: Cog,
-  ACCESSORY: Wrench,
-};
+// Params that are not part of the filter panel's draft state.
+const NON_FILTER = ["q", "sort", "page", "category"];
+// Filters that can arrive by link (e.g. /products?type=BEAN) but have no control in the panel.
+const LINK_ONLY: Record<string, string> = { type: "Type", seller: "Seller", maxMoq: "Max MOQ" };
 
-const VALID_TYPES: ProductType[] = ["BEAN", "MACHINE", "ACCESSORY"];
+type Filters = Record<string, string>;
+
+function filtersOf(params: URLSearchParams): Filters {
+  const filters: Filters = {};
+  params.forEach((value, key) => {
+    if (!NON_FILTER.includes(key) && value) filters[key] = value;
+  });
+  return filters;
+}
+
+function AttributeFilter({ def, value, onChange }: { def: AttributeDef; value: string; onChange: (value: string, commit: boolean) => void }) {
+  const title = def.unit ? `${def.label} (${def.unit})` : def.label;
+  if (def.type === "BOOLEAN") {
+    return (
+      <label className="flex items-center gap-2 text-sm text-coffee-800">
+        <input type="checkbox" checked={value === "true"} onChange={(e) => onChange(e.target.checked ? "true" : "", true)} className="h-4 w-4 accent-coffee-800" />
+        {def.label}
+      </label>
+    );
+  }
+  if (def.type === "SELECT") {
+    return (
+      <Field label={title}>
+        <Select value={value} onChange={(e) => onChange(e.target.value, true)}>
+          <option value="">Any</option>
+          {def.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </Select>
+      </Field>
+    );
+  }
+  return (
+    <Field label={title}>
+      <Input value={value} maxLength={100} onChange={(e) => onChange(e.target.value, false)} />
+    </Field>
+  );
+}
 
 export default function Products() {
-  const { user, refreshUser } = useAuth();
+  const brand = useBrand();
   const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [orderingId, setOrderingId] = useState<number | null>(null);
-  const [compareIds, setCompareIds] = useState<number[]>([]);
+  const { categorySlug: routeSlug } = useParams();
+  const [params, setParams] = useSearchParams();
 
-  // Filters are driven by the URL so nav/category links and search are shareable.
-  const typeParam = searchParams.get("type");
-  const type: ProductType | "" = VALID_TYPES.includes(typeParam as ProductType)
-    ? (typeParam as ProductType)
-    : "";
-  const query = searchParams.get("q")?.trim().toLowerCase() ?? "";
+  // All filter, sort and page state lives in the URL so any view can be shared as a link.
+  const categorySlug = routeSlug ?? params.get("category") ?? "";
+  const q = params.get("q")?.trim() ?? "";
+  const sort = params.get("sort") ?? "";
+  const pageIndex = Math.max(0, Number(params.get("page")) || 0);
+  const query = params.toString();
 
-  function setType(next: ProductType | "") {
-    setSearchParams((prev) => {
-      const p = new URLSearchParams(prev);
-      if (next) p.set("type", next);
-      else p.delete("type");
-      return p;
-    });
-  }
+  const [tree, setTree] = useState<Category[]>([]);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [result, setResult] = useState<Page<Product> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Filters>(() => filtersOf(params));
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useSeo(
+    {
+      title: category?.name ?? (q ? `Search: ${q}` : "Marketplace"),
+      description: category
+        ? `Buy ${category.name.toLowerCase()} from verified suppliers on ${brand.name}.`
+        : `Browse coffee, equipment and supplies from verified suppliers on ${brand.name}.`,
+      canonicalPath: routeSlug ? `/category/${routeSlug}` : "/products",
+    },
+    brand.name,
+  );
 
   useEffect(() => {
-    setLoading(true);
     api
-      .get<Product[]>("/api/products", { params: type ? { type } : {} })
-      .then((res) => setProducts(res.data))
-      .finally(() => setLoading(false));
-  }, [type]);
+      .get<Category[]>("/api/categories")
+      .then((res) => setTree(res.data))
+      .catch(() => undefined); // the category filter is simply not offered
+  }, []);
 
-  const visibleProducts = useMemo(() => {
-    if (!query) return products;
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        (p.description?.toLowerCase().includes(query) ?? false) ||
-        (p.category?.toLowerCase().includes(query) ?? false) ||
-        p.sellerName.toLowerCase().includes(query),
-    );
-  }, [products, query]);
+  useEffect(() => {
+    setCategory(null);
+    if (!categorySlug) return;
+    let stale = false;
+    api
+      .get<Category>(`/api/categories/${encodeURIComponent(categorySlug)}`)
+      .then((res) => !stale && setCategory(res.data))
+      .catch(() => undefined); // an unknown category is reported by the product search below
+    return () => {
+      stale = true;
+    };
+  }, [categorySlug]);
 
-  async function orderNow(product: Product) {
-    if (!user) {
-      navigate("/login", { state: { from: "/products" } });
-      return;
-    }
-    if (user.role !== "CUSTOMER") {
-      showToast("Only customer accounts can place orders", "info");
-      return;
-    }
-    setOrderingId(product.id);
-    try {
-      await api.post("/api/orders", { items: [{ productId: product.id, quantity: 1 }] });
-      showToast(`Order placed for ${product.name}!`);
-      setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, stock: p.stock - 1 } : p)));
-      refreshUser();
-    } catch (err) {
-      showToast(apiErrorMessage(err, "Could not place order"), "error");
-    } finally {
-      setOrderingId(null);
-    }
-  }
+  useEffect(() => {
+    let stale = false;
+    setResult(null);
+    setError(null);
+    const current = new URLSearchParams(query);
+    api
+      .get<Page<Product>>("/api/products", {
+        params: { ...Object.fromEntries(current), category: categorySlug || undefined, page: pageIndex, size: 12 },
+      })
+      .then((res) => !stale && setResult(res.data))
+      .catch((err) => !stale && setError(apiErrorMessage(err, "Could not load products")));
+    return () => {
+      stale = true;
+    };
+  }, [query, categorySlug, pageIndex]);
 
-  function toggleCompare(id: number) {
-    setCompareIds((prev) => {
-      if (prev.includes(id)) return prev.filter((i) => i !== id);
-      if (prev.length >= 3) {
-        showToast("You can compare up to 3 machines at a time", "info");
-        return prev;
-      }
-      return [...prev, id];
+  useEffect(() => setDraft(filtersOf(new URLSearchParams(query))), [query]);
+
+  useEffect(() => {
+    if (q) track("search", q);
+  }, [q]);
+
+  function searchFor(filters: Filters, nextSort = sort): URLSearchParams {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (nextSort) next.set("sort", nextSort);
+    // only the legacy /products?category= form keeps the slug in the query string
+    if (!routeSlug && categorySlug) next.set("category", categorySlug);
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value.trim()) next.set(key, value.trim());
     });
+    return next;
   }
+
+  /** Text fields update the draft only; selects and checkboxes commit straight to the URL. */
+  function setFilter(key: string, value: string, commit: boolean) {
+    const next = { ...draft, [key]: value };
+    setDraft(next);
+    if (commit) setParams(searchFor(next));
+  }
+
+  function applyDraft(e: FormEvent) {
+    e.preventDefault();
+    setParams(searchFor(draft));
+    setFiltersOpen(false);
+  }
+
+  // Attribute filters belong to one category, so they are dropped when it changes.
+  function changeCategory(slug: string) {
+    const kept = Object.fromEntries(Object.entries(draft).filter(([key]) => !key.startsWith("attr_")));
+    const next = searchFor(kept);
+    next.delete("category");
+    const search = next.toString();
+    navigate(`${slug ? `/category/${slug}` : "/products"}${search ? `?${search}` : ""}`);
+  }
+
+  function clearAll() {
+    if (routeSlug) setParams(q ? { q } : {});
+    else navigate(q ? `/products?q=${encodeURIComponent(q)}` : "/products");
+  }
+
+  function goToPage(page: number) {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (page > 0) next.set("page", String(page));
+      else next.delete("page");
+      return next;
+    });
+    window.scrollTo({ top: 0 });
+  }
+
+  const attributeFilters = (category?.attributes ?? []).filter((a) => a.filterable && a.type !== "NUMBER");
+  const activeCount = Object.keys(filtersOf(params)).length;
+  const linkOnly = Object.keys(LINK_ONLY).filter((key) => params.get(key));
+  const heading = category?.name ?? (q ? `Results for “${q}”` : "Marketplace");
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 pb-28">
-      <h1 className="text-3xl font-bold text-coffee-900">Beans &amp; Machines</h1>
-      <p className="mt-1 text-coffee-500">
-        {query
-          ? `Showing results for “${query}”`
-          : "Buy coffee beans, machines and accessories from verified sellers."}
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {category?.parentSlug && (
+        <Link to={`/category/${category.parentSlug}`} className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-coffee-500 hover:text-coffee-800">
+          <ArrowLeft size={14} /> {category.parentName}
+        </Link>
+      )}
+      <h1 className="text-2xl font-bold text-coffee-900">{heading}</h1>
+      <p className="mt-1 text-sm text-coffee-500">
+        {category && q ? `Results for “${q}” in this category. ` : ""}
+        Products are sold and shipped by independent verified suppliers.
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {typeFilters.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setType(f.value)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${
-              type === f.value ? "bg-coffee-800 text-cream-50" : "bg-coffee-100 text-coffee-700"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <p className="mt-10 text-coffee-400">Loading products…</p>
-      ) : visibleProducts.length === 0 ? (
-        <p className="mt-10 text-coffee-400">
-          {query
-            ? `No products match “${query}”.`
-            : "No approved products yet — check back soon."}
-        </p>
-      ) : (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleProducts.map((p) => {
-            const Icon = typeIcon[p.type] ?? Coffee;
-            return (
-              <div key={p.id} className="flex flex-col rounded-2xl border border-coffee-100 bg-cream-50 p-5 shadow-sm transition hover:shadow-md">
-                <Link to={`/products/${p.id}`} className="relative flex h-32 items-center justify-center rounded-xl bg-coffee-100">
-                  <Icon size={40} className="text-coffee-400" />
-                  <WishlistHeart type="product" id={p.id} className="absolute right-2 top-2 h-8 w-8" />
-                </Link>
-                <Link to={`/products/${p.id}`}>
-                  <h3 className="mt-4 font-semibold text-coffee-900 hover:underline">{p.name}</h3>
-                </Link>
-                <p className="text-xs text-coffee-400">by {p.sellerName}</p>
-                <div className="mt-1">
-                  <StarRating rating={p.avgRating} count={p.reviewCount} size={12} />
-                </div>
-                <p className="mt-2 line-clamp-2 text-sm text-coffee-500">{p.description}</p>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-lg font-bold text-coffee-900">₹{p.price.toLocaleString("en-IN")}</span>
-                  <span className="text-xs text-coffee-400">{p.stock} in stock</span>
-                </div>
-                <Button
-                  className="mt-4"
-                  disabled={p.stock <= 0 || orderingId === p.id}
-                  onClick={() => orderNow(p)}
-                >
-                  {p.stock <= 0 ? "Out of stock" : orderingId === p.id ? "Placing order…" : "Order now"}
-                </Button>
-                {p.type === "MACHINE" && (
-                  <label className="mt-3 flex items-center gap-2 text-xs text-coffee-500">
-                    <input
-                      type="checkbox"
-                      checked={compareIds.includes(p.id)}
-                      onChange={() => toggleCompare(p.id)}
-                      className="rounded border-coffee-300"
-                    />
-                    Add to compare
-                  </label>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {compareIds.length > 0 && (
-        <div className="fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
-          <div className="flex items-center gap-4 rounded-full bg-coffee-900 px-6 py-3 text-cream-50 shadow-xl">
-            <span className="flex items-center gap-2 text-sm font-medium">
-              <Scale size={16} /> {compareIds.length} machine{compareIds.length > 1 ? "s" : ""} selected
-            </span>
-            <Link
-              to={`/products/compare?ids=${compareIds.join(",")}`}
-              className="rounded-full bg-cream-50 px-4 py-1.5 text-sm font-semibold text-coffee-900 hover:bg-cream-200"
-            >
-              Compare
+      {category && category.children.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {category.children.map((child) => (
+            <Link key={child.id} to={`/category/${child.slug}`} className="rounded-full bg-coffee-100 px-3 py-1.5 text-sm font-medium text-coffee-800 hover:bg-coffee-200">
+              {child.name}
             </Link>
-            <button onClick={() => setCompareIds([])} className="text-xs text-coffee-300 hover:text-cream-50">
-              Clear
-            </button>
-          </div>
+          ))}
         </div>
       )}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[16rem_1fr]">
+        <aside>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            aria-controls="product-filters"
+            className="flex w-full items-center justify-between rounded-2xl border border-coffee-200 bg-cream-50 px-4 py-2.5 text-sm font-semibold text-coffee-800 lg:hidden"
+          >
+            <span className="flex items-center gap-2">
+              <SlidersHorizontal size={16} /> Filters{activeCount > 0 ? ` (${activeCount})` : ""}
+            </span>
+            <span className="text-xs font-medium text-coffee-500">{filtersOpen ? "Hide" : "Show"}</span>
+          </button>
+
+          <form
+            id="product-filters"
+            onSubmit={applyDraft}
+            className={`${filtersOpen ? "mt-3 block" : "hidden"} space-y-4 rounded-2xl border border-coffee-100 bg-cream-50 p-4 lg:mt-0 lg:block`}
+          >
+            {tree.length > 0 && (
+              <Field label="Category">
+                <Select value={categorySlug} onChange={(e) => changeCategory(e.target.value)}>
+                  <option value="">All categories</option>
+                  {tree.map((root) => [
+                    <option key={root.id} value={root.slug}>
+                      {root.name}
+                    </option>,
+                    ...root.children.map((child) => (
+                      <option key={child.id} value={child.slug}>
+                        {"   "}
+                        {child.name}
+                      </option>
+                    )),
+                  ])}
+                </Select>
+              </Field>
+            )}
+
+            <div>
+              <span className="mb-1 block text-xs font-semibold text-coffee-600">Price (₹)</span>
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="number" min={0} inputMode="decimal" placeholder="Min" aria-label="Minimum price" value={draft.minPrice ?? ""} onChange={(e) => setFilter("minPrice", e.target.value, false)} />
+                <Input type="number" min={0} inputMode="decimal" placeholder="Max" aria-label="Maximum price" value={draft.maxPrice ?? ""} onChange={(e) => setFilter("maxPrice", e.target.value, false)} />
+              </div>
+            </div>
+
+            <Field label="Supplier location">
+              <Input placeholder="City or state" maxLength={100} value={draft.location ?? ""} onChange={(e) => setFilter("location", e.target.value, false)} />
+            </Field>
+
+            <Field label="Minimum rating">
+              <Select value={draft.minRating ?? ""} onChange={(e) => setFilter("minRating", e.target.value, true)}>
+                <option value="">Any rating</option>
+                <option value="4">4 stars &amp; up</option>
+                <option value="3">3 stars &amp; up</option>
+                <option value="2">2 stars &amp; up</option>
+              </Select>
+            </Field>
+
+            <label className="flex items-center gap-2 text-sm text-coffee-800">
+              <input type="checkbox" checked={draft.inStock === "true"} onChange={(e) => setFilter("inStock", e.target.checked ? "true" : "", true)} className="h-4 w-4 accent-coffee-800" />
+              In stock only
+            </label>
+
+            {attributeFilters.length > 0 && (
+              <div className="space-y-4 border-t border-coffee-100 pt-4">
+                {attributeFilters.map((def) => (
+                  <AttributeFilter key={def.key} def={def} value={draft[`attr_${def.key}`] ?? ""} onChange={(value, commit) => setFilter(`attr_${def.key}`, value, commit)} />
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button type="submit" className="flex-1">
+                Apply
+              </Button>
+              <Button type="button" variant="secondary" onClick={clearAll}>
+                Clear
+              </Button>
+            </div>
+          </form>
+        </aside>
+
+        <div className="min-w-0">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-coffee-500">
+              {result ? `${result.totalElements} ${result.totalElements === 1 ? "product" : "products"}` : " "}
+            </p>
+            <label className="flex items-center gap-2 text-sm text-coffee-600">
+              Sort by
+              <Select value={sort} onChange={(e) => setParams(searchFor(filtersOf(params), e.target.value))} className="!w-auto">
+                {SORTS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </div>
+
+          {linkOnly.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {linkOnly.map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key, "", true)}
+                  className="inline-flex items-center gap-1 rounded-full bg-coffee-100 px-3 py-1 text-xs font-medium text-coffee-800 hover:bg-coffee-200"
+                  aria-label={`Remove ${LINK_ONLY[key]} filter`}
+                >
+                  {LINK_ONLY[key]}: {key === "type" ? label(params.get(key)) : params.get(key)} <X size={12} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error ? (
+            <ErrorNote>{error}</ErrorNote>
+          ) : result === null ? (
+            <SkeletonGrid count={6} />
+          ) : result.content.length === 0 ? (
+            <EmptyState
+              title="No products match"
+              hint="Try removing a filter or searching for something else. For bulk or custom needs, post a requirement and let suppliers quote."
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  {activeCount > 0 && (
+                    <Button variant="secondary" onClick={clearAll}>
+                      Clear filters
+                    </Button>
+                  )}
+                  <Button onClick={() => navigate("/post-requirement")}>Post Requirement</Button>
+                </div>
+              }
+            />
+          ) : (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {result.content.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+              <Pagination page={result} onChange={goToPage} />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

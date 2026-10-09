@@ -1,5 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useBrand } from "../../context/BrandContext";
+import NotificationBell from "./NotificationBell";
 
 export interface DashboardNavItem {
   to: string;
@@ -15,17 +17,18 @@ export default function DashboardLayout({
   navItems: DashboardNavItem[];
 }) {
   const { user, logout } = useAuth();
+  const brand = useBrand();
 
   return (
     <div className="flex min-h-screen bg-cream-100">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-coffee-100 bg-cream-50 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-coffee-100 bg-cream-50 md:flex">
         <div className="border-b border-coffee-100 px-6 py-5">
           <Link to="/" className="text-lg font-bold text-coffee-800">
-            ☕ CoffeeHub
+            ☕ {brand.name}
           </Link>
           <p className="mt-1 text-xs font-medium uppercase tracking-wide text-coffee-400">{title}</p>
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -33,9 +36,7 @@ export default function DashboardLayout({
               end={item.end}
               className={({ isActive }) =>
                 `block rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "bg-coffee-800 text-cream-50"
-                    : "text-coffee-700 hover:bg-coffee-100"
+                  isActive ? "bg-coffee-800 text-cream-50" : "text-coffee-700 hover:bg-coffee-100"
                 }`
               }
             >
@@ -46,23 +47,26 @@ export default function DashboardLayout({
         <div className="border-t border-coffee-100 px-6 py-4">
           <p className="truncate text-sm font-semibold text-coffee-800">{user?.name}</p>
           <p className="truncate text-xs text-coffee-400">{user?.email}</p>
-          <button
-            onClick={logout}
-            className="mt-3 text-sm font-medium text-red-600 hover:text-red-700"
-          >
+          <button onClick={logout} className="mt-3 text-sm font-medium text-red-600 hover:text-red-700">
             Log out
           </button>
         </div>
       </aside>
 
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-coffee-100 bg-cream-50 px-4 py-3 md:hidden">
-          <Link to="/" className="text-lg font-bold text-coffee-800">
-            ☕ CoffeeHub
+      <div className="min-w-0 flex-1">
+        <header className="flex items-center justify-between gap-3 border-b border-coffee-100 bg-cream-50 px-4 py-2.5 sm:px-6">
+          <Link to="/" className="text-lg font-bold text-coffee-800 md:hidden">
+            ☕ {brand.name}
           </Link>
-          <button onClick={logout} className="text-sm font-medium text-red-600">
-            Log out
-          </button>
+          <Link to="/" className="hidden text-sm font-medium text-coffee-500 hover:text-coffee-800 md:block">
+            ← Back to marketplace
+          </Link>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button onClick={logout} className="text-sm font-medium text-red-600 md:hidden">
+              Log out
+            </button>
+          </div>
         </header>
         <nav className="flex gap-2 overflow-x-auto border-b border-coffee-100 bg-cream-50 px-3 py-2 md:hidden">
           {navItems.map((item) => (
