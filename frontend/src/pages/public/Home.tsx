@@ -1,440 +1,292 @@
-import { motion } from "framer-motion";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import ReactFiber from "../../components/layout/ReactFiber";
-import {
-  ArrowRight,
-  BadgeCheck,
-  Coffee,
-  Cog,
-  Gift,
-  Globe,
-  GraduationCap,
-  Headphones,
-  Leaf,
-  Package,
-  Recycle,
-  ShieldCheck,
-  Sprout,
-  Star,
-  Store,
-  Tag,
-  Truck,
-  Wrench,
-} from "lucide-react";
+import { ArrowRight, BadgeCheck, ClipboardList, Coffee, Handshake, Lock, MessagesSquare, Scale } from "lucide-react";
+import { api, apiErrorMessage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
+import { useBrand } from "../../context/BrandContext";
+import { useSeo } from "../../lib/seo";
+import type { Category, ContentBlock, Page, Product, VendorSummary } from "../../types";
+import SearchBar from "../../components/layout/SearchBar";
+import heroImage from "../../components/layout/beans.jpg";
+import { EmptyState, ErrorNote, Img, SkeletonGrid } from "../../components/ui/Common";
+import ProductCard from "../../components/ui/ProductCard";
+import { SupplierCard } from "./Suppliers";
 
-// Free-license photos from Unsplash (images.unsplash.com hotlinking is explicitly
-// permitted by the Unsplash License for commercial use, no attribution required).
-const PHOTOS = {
-  hero: "photo-1426174840074-541ae41efdb9",
-  beans: "photo-1753837787691-84a06d715d24",
-  machine: "photo-1758593386033-cb1f842d550c",
-  cafeInterior: "photo-1749922217403-412f69429dc5",
-  pouring: "photo-1761271046396-97d231b59dd7",
-  flatlay: "photo-1536227661368-deef57acf708",
-  groupTable: "photo-1710880694444-970aaf7e7f97",
-  iced: "photo-1531835207745-506a1bc035d8",
-  counter: "photo-1765894711254-a970c9277456",
-};
+const primaryCta = "inline-flex items-center justify-center gap-2 rounded-full bg-coffee-800 px-5 py-2.5 text-sm font-semibold text-cream-50 hover:bg-coffee-700";
+const secondaryCta = "inline-flex items-center justify-center gap-2 rounded-full border border-coffee-300 bg-cream-50 px-5 py-2.5 text-sm font-semibold text-coffee-800 hover:bg-coffee-100";
 
-function img(id: string, w: number, h?: number) {
-  const base = `https://images.unsplash.com/${id}?auto=format&fit=crop&q=75&w=${w}`;
-  return h ? `${base}&h=${h}` : base;
+const RFQ_STEPS = [
+  { icon: ClipboardList, title: "Post your requirement", text: "Tell us what you need: product, quantity, target price and delivery location." },
+  { icon: MessagesSquare, title: "Verified suppliers quote", text: "We review it and route it to matching verified suppliers, who send their quotes." },
+  { icon: Scale, title: "Compare and select", text: "Compare price, lead time and supplier ratings side by side, then pick one." },
+];
+
+interface Loaded<T> {
+  data: T | null;
+  error: string | null;
 }
 
-const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
-
-// ---- Category sidebar (links to the real catalog with a type pre-filter) ----
-const categories = [
-  { label: "All Categories", icon: Package, to: "/products" },
-  { label: "Coffee Beans", icon: Coffee, to: "/products?type=BEAN" },
-  { label: "Green Coffee", icon: Leaf, to: "/products?type=BEAN" },
-  { label: "Used Equipment", icon: Recycle, to: "/products?type=MACHINE" },
-  { label: "Brewing Equipment", icon: Cog, to: "/products?type=ACCESSORY" },
-  { label: "Café & Commercial", icon: Store, to: "/cafes" },
-  { label: "Accessories", icon: Wrench, to: "/products?type=ACCESSORY" },
-  { label: "Education", icon: GraduationCap, to: "/products" },
-  { label: "Deals & Offers", icon: Tag, to: "/products" },
-];
-
-// ---- Circular category chips ----
-const chips = [
-  { label: "Green Coffee", photo: PHOTOS.beans, to: "/products?type=BEAN" },
-  { label: "Coffee Beans", photo: PHOTOS.flatlay, to: "/products?type=BEAN" },
-  { label: "Used Equipment", photo: PHOTOS.machine, to: "/products?type=MACHINE" },
-  { label: "Brewing Gear", photo: PHOTOS.pouring, to: "/products?type=ACCESSORY" },
-  { label: "Café & Commercial", photo: PHOTOS.cafeInterior, to: "/cafes" },
-  { label: "Accessories", photo: PHOTOS.counter, to: "/products?type=ACCESSORY" },
-  { label: "Deals", photo: PHOTOS.iced, to: "/products" },
-  { label: "All", photo: PHOTOS.groupTable, to: "/products" },
-];
-
-const stats = [
-  { value: "50K+", label: "Products" },
-  { value: "10K+", label: "Sellers" },
-  { value: "100+", label: "Countries" },
-];
-
-const trustBadges = [
-  { icon: BadgeCheck, title: "Verified Sellers", sub: "Trusted Quality" },
-  { icon: ShieldCheck, title: "Secure Payments", sub: "Safe & Protected" },
-  { icon: Truck, title: "Worldwide Shipping", sub: "Fast & Reliable" },
-  { icon: Gift, title: "Buyer Protection", sub: "We've Got You" },
-];
-
-interface SampleProduct {
-  name: string;
-  sub: string;
-  price: number;
-  unit?: string;
-  rating: number;
-  reviews: number;
-  photo: string;
+function useLoad<T>(load: () => Promise<T>, fallbackError: string): Loaded<T> {
+  const [state, setState] = useState<Loaded<T>>({ data: null, error: null });
+  useEffect(() => {
+    let stale = false;
+    load()
+      .then((data) => !stale && setState({ data, error: null }))
+      .catch((err) => !stale && setState({ data: null, error: apiErrorMessage(err, fallbackError) }));
+    return () => {
+      stale = true;
+    };
+    // each loader is a fixed request: run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return state;
 }
 
-const coffeeBeans: SampleProduct[] = [
-  { name: "Kofe Geek House Blend", sub: "Ethiopia Sidamo · 250g", price: 599, rating: 4.8, reviews: 210, photo: PHOTOS.flatlay },
-  { name: "Blue Tokai Vienna Roast", sub: "French Roast · 250g", price: 549, rating: 4.7, reviews: 173, photo: PHOTOS.beans },
-  { name: "Third Wave Signature", sub: "Bibo's Blend · 250g", price: 640, rating: 4.6, reviews: 142, photo: PHOTOS.counter },
-  { name: "Kofe Geek Espresso Blend", sub: "Dark Roast · 250g", price: 599, rating: 4.8, reviews: 230, photo: PHOTOS.iced },
-];
+/** Featured categories first (at any depth); top-level ones fill in when few are marked featured. */
+function pickCategories(tree: Category[]): Category[] {
+  const all = tree.flatMap((c) => [c, ...c.children]);
+  const featured = all.filter((c) => c.featured);
+  const rest = tree.filter((c) => !c.featured);
+  return (featured.length >= 4 ? featured : [...featured, ...rest]).slice(0, 8);
+}
 
-const greenCoffee: SampleProduct[] = [
-  { name: "Ethiopia Yirgacheffe G1", sub: "Washed · Floral", price: 850, unit: "/kg", rating: 4.9, reviews: 88, photo: PHOTOS.beans },
-  { name: "Colombia Supremo", sub: "Farm Direct · Caramel", price: 690, unit: "/kg", rating: 4.8, reviews: 76, photo: PHOTOS.flatlay },
-  { name: "Brazil Fazenda Rio", sub: "Natural · Chocolate", price: 550, unit: "/kg", rating: 4.7, reviews: 64, photo: PHOTOS.counter },
-  { name: "Guatemala Huehuetenango", sub: "Washed · Cocoa", price: 780, unit: "/kg", rating: 4.7, reviews: 52, photo: PHOTOS.iced },
-];
+async function loadSuppliers(): Promise<VendorSummary[]> {
+  const featured = (await api.get<VendorSummary[]>("/api/suppliers/featured")).data;
+  if (featured.length > 0) return featured.slice(0, 4);
+  return (await api.get<Page<VendorSummary>>("/api/suppliers", { params: { size: 4 } })).data.content;
+}
 
-const brewingEquipment: SampleProduct[] = [
-  { name: "Timemore C2 Grinder", sub: "Manual · 38mm burr", price: 6999, rating: 4.9, reviews: 320, photo: PHOTOS.machine },
-  { name: "Hario V60 Dripper", sub: "Ceramic · Size 02", price: 1490, rating: 4.8, reviews: 254, photo: PHOTOS.pouring },
-  { name: "Breville Barista Pro", sub: "Espresso · Home", price: 54990, rating: 4.5, reviews: 118, photo: PHOTOS.machine },
-  { name: "Fellow Stagg Kettle", sub: "Pour Over · 0.9L", price: 8999, rating: 4.8, reviews: 176, photo: PHOTOS.pouring },
-];
-
-const promos = [
-  { title: "Used Equipment", sub: "Quality pre-loved. Great value.", icon: Recycle, photo: PHOTOS.machine, to: "/products?type=MACHINE" },
-  { title: "Green Coffee Trading", sub: "Direct from farms to roasters.", icon: Sprout, photo: PHOTOS.beans, to: "/products?type=BEAN" },
-  { title: "Coffee Education", sub: "Learn. Brew. Improve.", icon: GraduationCap, photo: PHOTOS.pouring, to: "/products" },
-];
-
-const trustBar = [
-  { icon: ShieldCheck, label: "100% Secure Payments" },
-  { icon: BadgeCheck, label: "Verified Sellers" },
-  { icon: Truck, label: "Worldwide Shipping" },
-  { icon: Gift, label: "Buyer Protection" },
-  { icon: Headphones, label: "24/7 Customer Support" },
-];
-
-function Stars({ rating, reviews }: { rating: number; reviews: number }) {
+function Section({ title, subtitle, link, children }: { title: string; subtitle?: string; link?: { to: string; text: string }; children: ReactNode }) {
   return (
-    <div className="flex items-center gap-1 text-xs text-coffee-500">
-      <Star size={12} className="fill-amber-accent text-amber-accent" />
-      <span className="font-semibold text-coffee-700">{rating.toFixed(1)}</span>
-      <span className="text-coffee-400">({reviews})</span>
-    </div>
-  );
-}
-
-function ProductCard({ p }: { p: SampleProduct }) {
-  return (
-    <Link
-      to="/products"
-      className="group flex flex-col overflow-hidden rounded-2xl border border-coffee-100 bg-cream-50 transition hover:-translate-y-0.5 hover:shadow-md"
-    >
-      <div className="aspect-square overflow-hidden bg-coffee-100">
-        <img
-          src={img(p.photo, 320, 320)}
-          alt={p.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
-      </div>
-      <div className="flex flex-1 flex-col p-3">
-        <h4 className="line-clamp-1 text-sm font-semibold text-coffee-900">{p.name}</h4>
-        <p className="mt-0.5 line-clamp-1 text-xs text-coffee-400">{p.sub}</p>
-        <div className="mt-1.5">
-          <Stars rating={p.rating} reviews={p.reviews} />
+    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-xl font-bold text-coffee-900 sm:text-2xl">{title}</h2>
+          {subtitle && <p className="mt-1 text-sm text-coffee-500">{subtitle}</p>}
         </div>
-        <div className="mt-2 flex items-end justify-between gap-2">
-          <span className="min-w-0 truncate text-base font-bold text-coffee-900">
-            {inr(p.price)}
-            {p.unit && <span className="text-xs font-normal text-coffee-400"> {p.unit}</span>}
-          </span>
-          <span className="shrink-0 whitespace-nowrap rounded-full bg-amber-accent/15 px-2.5 py-1 text-[11px] font-semibold text-coffee-700 transition group-hover:bg-amber-accent group-hover:text-coffee-900">
-            View
-          </span>
-        </div>
+        {link && (
+          <Link to={link.to} className="inline-flex items-center gap-1 text-sm font-semibold text-coffee-700 hover:underline">
+            {link.text} <ArrowRight size={14} />
+          </Link>
+        )}
       </div>
-    </Link>
-  );
-}
-
-function CarouselSection({
-  title,
-  items,
-  viewAll,
-}: {
-  title: string;
-  items: SampleProduct[];
-  viewAll: string;
-}) {
-  return (
-    <section className="rounded-2xl border border-coffee-100 bg-cream-100/50 p-4 sm:p-5">
-      <div className="flex items-center justify-between">
-        <h3 className="font-serif text-lg font-bold text-coffee-900">{title}</h3>
-        <Link to={viewAll} className="flex items-center gap-1 text-xs font-semibold text-coffee-500 hover:text-coffee-800">
-          View All <ArrowRight size={13} />
-        </Link>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {items.map((p) => (
-          <ProductCard key={p.name} p={p} />
-        ))}
-      </div>
+      {children}
     </section>
   );
 }
 
-export default function Home() {
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      {/* ===== Top row: sidebar · hero · rail ===== */}
-      <div className="grid gap-5 lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_300px]">
-        {/* Category sidebar */}
-        <aside className="hidden lg:block">
-          <nav className="overflow-hidden rounded-2xl border border-coffee-100 bg-cream-50">
-            {categories.map((c, i) => (
-              <Link
-                key={c.label}
-                to={c.to}
-                className={`flex items-center gap-3 px-4 py-2.5 text-sm text-coffee-700 transition hover:bg-coffee-100/70 hover:text-coffee-900 ${
-                  i === 0 ? "bg-coffee-100/60 font-semibold" : ""
-                }`}
-              >
-                <c.icon size={16} className="text-coffee-400" />
-                {c.label}
-              </Link>
-            ))}
-          </nav>
+function Banner({ banner }: { banner: ContentBlock }) {
+  const inner = (
+    <>
+      <span className="font-semibold">{banner.title}</span>
+      {banner.body && <span className="text-coffee-200"> {banner.body}</span>}
+    </>
+  );
+  const cls = "block px-4 py-2 text-center text-sm text-cream-50";
+  // Internal links stay in the SPA; only http(s) URLs are rendered as external links.
+  if (!banner.linkUrl || !/^(\/(?!\/)|https?:\/\/)/i.test(banner.linkUrl)) return <p className={cls}>{inner}</p>;
+  return banner.linkUrl.startsWith("/") ? (
+    <Link to={banner.linkUrl} className={`${cls} hover:underline`}>
+      {inner}
+    </Link>
+  ) : (
+    <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" className={`${cls} hover:underline`}>
+      {inner}
+    </a>
+  );
+}
 
-          <div className="mt-4 rounded-2xl border border-coffee-100 bg-cream-50 p-4">
-            <p className="font-semibold text-coffee-900">Sell on Coffee Hub</p>
-            <p className="mt-1 text-xs text-coffee-500">
-              Reach thousands of coffee enthusiasts and businesses worldwide.
+export default function Home() {
+  const brand = useBrand();
+  const { user } = useAuth();
+  const banners = useLoad(() => api.get<ContentBlock[]>("/api/content", { params: { type: "BANNER" } }).then((r) => r.data), "");
+  const categories = useLoad(() => api.get<Category[]>("/api/categories").then((r) => pickCategories(r.data)), "Could not load categories");
+  const suppliers = useLoad(loadSuppliers, "Could not load suppliers");
+  const products = useLoad(() => api.get<Product[]>("/api/products/featured").then((r) => r.data), "Could not load products");
+
+  useSeo(
+    {
+      title: brand.tagline,
+      description: `${brand.name} is a multi-vendor coffee marketplace: buy coffee, equipment and supplies from verified suppliers, or post a bulk requirement and compare quotes.`,
+      canonicalPath: "/",
+    },
+    brand.name,
+  );
+
+  const trust = [
+    { icon: BadgeCheck, title: "Verified Sellers", text: "Business documents are checked by our team before a supplier can list anything." },
+    { icon: Handshake, title: "B2B Sourcing", text: "Post a bulk requirement once and receive comparable quotes from several suppliers." },
+    { icon: Lock, title: "Secure Transactions", text: "Orders, payments and messages stay on the platform, with dispute support if something goes wrong." },
+    { icon: Coffee, title: "Coffee-Focused Marketplace", text: "Green and roasted coffee, equipment, accessories and café supplies. Nothing else." },
+  ];
+
+  return (
+    <div>
+      {banners.data && banners.data.length > 0 && (
+        <div className="divide-y divide-coffee-700 bg-coffee-800">
+          {banners.data.map((b) => (
+            <Banner key={b.id} banner={b} />
+          ))}
+        </div>
+      )}
+
+      {/* 1. Hero */}
+      <section className="border-b border-coffee-100 bg-cream-100">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[3fr_2fr] lg:py-14">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-coffee-500">{brand.tagline}</p>
+            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight text-coffee-900 sm:text-4xl lg:text-5xl">
+              Buy and source coffee from verified suppliers
+            </h1>
+            <p className="mt-3 max-w-xl text-coffee-600">
+              One marketplace for coffee, equipment and café supplies from many independent sellers. Order directly, or
+              post a bulk requirement and compare supplier quotes.
             </p>
+            <SearchBar large className="mt-6 max-w-xl" />
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link to="/products" className={primaryCta}>
+                Explore Marketplace <ArrowRight size={16} />
+              </Link>
+              <Link to="/post-requirement" className={secondaryCta}>
+                Post Requirement
+              </Link>
+            </div>
+          </div>
+          <img src={heroImage} alt="Roasted coffee beans" decoding="async" className="hidden h-80 w-full rounded-2xl object-cover lg:block" />
+        </div>
+      </section>
+
+      {/* 2. Shop by category */}
+      {(categories.error || categories.data === null || categories.data.length > 0) && (
+        <Section title="Shop by Category" link={{ to: "/products", text: "All products" }}>
+          {categories.error ? (
+            <ErrorNote>{categories.error}</ErrorNote>
+          ) : categories.data === null ? (
+            <SkeletonGrid count={4} className="h-32" />
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {categories.data.map((c) => (
+                <Link
+                  key={c.id}
+                  to={`/category/${c.slug}`}
+                  className="group overflow-hidden rounded-2xl border border-coffee-100 bg-cream-50 shadow-sm transition hover:shadow-md"
+                >
+                  <Img src={c.imageUrl} alt="" className="h-24 w-full sm:h-28" />
+                  <p className="px-3 py-2.5 text-sm font-semibold text-coffee-900 group-hover:underline">{c.name}</p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* 3. B2B sourcing */}
+      <section className="bg-coffee-900 text-cream-50">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-accent">Bulk &amp; B2B sourcing</p>
+              <h2 className="mt-1 text-2xl font-bold sm:text-3xl">Need a large or custom order? Let suppliers come to you.</h2>
+              <p className="mt-2 text-sm text-coffee-200">
+                For cafés, hotels, offices, retailers and private-label brands. Posting a requirement is free.
+              </p>
+            </div>
             <Link
-              to="/register?role=SELLER"
-              className="mt-3 block rounded-full bg-coffee-800 px-4 py-2 text-center text-sm font-semibold text-cream-50 hover:bg-coffee-700"
+              to="/post-requirement"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-amber-accent px-6 py-3 text-sm font-bold text-coffee-900 hover:brightness-105"
             >
-              Start Selling
+              Post Requirement <ArrowRight size={16} />
             </Link>
           </div>
-
-          <Link
-            to="/products?type=BEAN"
-            className="relative mt-4 block h-40 overflow-hidden rounded-2xl"
-          >
-            <img src={img(PHOTOS.beans, 400, 320)} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-coffee-900/90 to-coffee-900/20" />
-            <div className="absolute inset-x-0 bottom-0 p-4 text-cream-50">
-              <p className="font-serif text-lg font-bold leading-tight">For Every Coffee Journey</p>
-              <span className="mt-2 inline-block rounded-full bg-amber-accent px-3 py-1 text-xs font-semibold text-coffee-900">
-                Explore Now
-              </span>
-            </div>
-          </Link>
-        </aside>
-
-        {/* Hero — dark banner with the spinning 3D coffee drum */}
-        <section className="relative flex min-h-[22rem] flex-col overflow-hidden rounded-2xl bg-coffee-900 text-cream-50">
-          <div className="absolute inset-0">
-            <img
-              src={img(PHOTOS.beans, 1400)}
-              alt=""
-              className="h-full w-full object-cover opacity-45"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-coffee-900 via-coffee-900/70 to-coffee-900/25" />
-            <div className="absolute inset-0 bg-gradient-to-t from-coffee-900/80 via-transparent to-transparent" />
-          </div>
-
-          <div className="relative flex flex-1 flex-col justify-center gap-6 p-8 sm:p-12 md:flex-row md:items-center">
-            <div className="max-w-md">
-              <motion.h1
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="font-serif text-4xl font-bold leading-tight sm:text-5xl"
-              >
-                Everything Coffee.
-                <br />
-                <span className="text-amber-accent">Everywhere.</span>
-              </motion.h1>
-              <p className="mt-4 max-w-sm text-sm text-cream-100/85 sm:text-base">
-                The world&rsquo;s marketplace for coffee lovers, roasters, and businesses — from farm
-                to cup.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link
-                  to="/products"
-                  className="rounded-full bg-amber-accent px-6 py-3 text-sm font-semibold text-coffee-900 hover:bg-amber-accent/90"
-                >
-                  Shop Now
-                </Link>
-                <Link
-                  to="/products?type=BEAN"
-                  className="rounded-full border border-cream-100/40 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-white/10"
-                >
-                  Explore Green Coffee
-                </Link>
-              </div>
-            </div>
-
-            {/* 3D spinning coffee drum */}
-            <div className="hidden aspect-square w-full max-w-[18rem] shrink-0 md:block">
-              <ReactFiber />
-            </div>
-          </div>
-        </section>
-
-        {/* Right rail — stats · trust · newsletter */}
-        <aside className="hidden xl:block">
-          <div className="relative overflow-hidden rounded-2xl bg-coffee-800 p-5 text-cream-50">
-            <img
-              src={img(PHOTOS.cafeInterior, 400, 300)}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-20"
-            />
-            <div className="relative">
-              <p className="text-sm font-semibold">Connecting Every Part of the Coffee World</p>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                {stats.map((s) => (
-                  <div key={s.label}>
-                    <p className="font-serif text-xl font-bold text-amber-accent">{s.value}</p>
-                    <p className="text-[11px] text-cream-100/80">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-coffee-100 bg-cream-50 p-4">
-            {trustBadges.map((b, i) => (
-              <div
-                key={b.title}
-                className={`flex items-center gap-3 py-2.5 ${i > 0 ? "border-t border-coffee-100" : ""}`}
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-accent/15">
-                  <b.icon size={16} className="text-amber-accent" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-coffee-900">{b.title}</p>
-                  <p className="text-xs text-coffee-400">{b.sub}</p>
+          <ol className="mt-8 grid gap-4 md:grid-cols-3">
+            {RFQ_STEPS.map((step, i) => (
+              <li key={step.title} className="rounded-2xl border border-coffee-700 bg-coffee-800 p-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-coffee-700 text-amber-accent">
+                    <step.icon size={18} />
+                  </span>
+                  <p className="font-semibold">
+                    {i + 1}. {step.title}
+                  </p>
                 </div>
-              </div>
+                <p className="mt-3 text-sm text-coffee-200">{step.text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* 4. Verified suppliers */}
+      {(suppliers.error || suppliers.data === null || suppliers.data.length > 0) && (
+        <Section title="Verified Suppliers" subtitle="Businesses whose documents our team has reviewed and approved." link={{ to: "/suppliers", text: "All suppliers" }}>
+          {suppliers.error ? (
+            <ErrorNote>{suppliers.error}</ErrorNote>
+          ) : suppliers.data === null ? (
+            <SkeletonGrid count={4} className="h-40" />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {suppliers.data.map((s) => (
+                <SupplierCard key={s.id} supplier={s} />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* 5. Featured products */}
+      <Section title="Featured Products" link={{ to: "/products", text: "Explore marketplace" }}>
+        {products.error ? (
+          <ErrorNote>{products.error}</ErrorNote>
+        ) : products.data === null ? (
+          <SkeletonGrid count={4} />
+        ) : products.data.length === 0 ? (
+          <EmptyState title="No products listed yet" hint="Listings appear here as soon as verified suppliers publish them." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {products.data.map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
+        )}
+      </Section>
 
-          <div className="mt-4 rounded-2xl bg-coffee-900 p-5 text-cream-50">
-            <p className="font-semibold">Stay in the Loop</p>
-            <p className="mt-1 text-xs text-cream-100/80">
-              Get the latest on coffee, deals and industry insights.
-            </p>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="mt-3 flex overflow-hidden rounded-full bg-cream-50"
-            >
-              <input
-                type="email"
-                required
-                placeholder="Enter your email"
-                className="min-w-0 flex-1 bg-transparent px-4 py-2 text-sm text-coffee-900 outline-none placeholder:text-coffee-400"
-              />
-              <button className="bg-amber-accent px-4 text-coffee-900" aria-label="Subscribe">
-                <ArrowRight size={16} />
-              </button>
-            </form>
-          </div>
-        </aside>
-      </div>
-
-      {/* ===== Category chips ===== */}
-      <div className="mt-6 grid grid-cols-4 gap-3 rounded-2xl border border-coffee-100 bg-cream-50 p-4 sm:grid-cols-8">
-        {chips.map((c) => (
-          <Link key={c.label} to={c.to} className="group flex flex-col items-center gap-2 text-center">
-            <span className="h-14 w-14 overflow-hidden rounded-full border border-coffee-100 bg-coffee-100">
-              <img
-                src={img(c.photo, 120, 120)}
-                alt=""
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-              />
-            </span>
-            <span className="text-[11px] font-medium text-coffee-600 group-hover:text-coffee-900">
-              {c.label}
-            </span>
-          </Link>
-        ))}
-      </div>
-
-      {/* ===== Product carousels ===== */}
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
-        <CarouselSection title="Coffee Beans" items={coffeeBeans} viewAll="/products?type=BEAN" />
-        <CarouselSection title="Green Coffee" items={greenCoffee} viewAll="/products?type=BEAN" />
-        <CarouselSection title="Brewing Equipment" items={brewingEquipment} viewAll="/products?type=ACCESSORY" />
-      </div>
-
-      {/* ===== Promo banner cards ===== */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {promos.map((p) => (
-          <Link
-            key={p.title}
-            to={p.to}
-            className="group relative flex h-44 flex-col justify-end overflow-hidden rounded-2xl p-5 text-cream-50"
-          >
-            <img
-              src={img(p.photo, 500, 400)}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-coffee-900/95 via-coffee-900/60 to-coffee-900/20" />
-            <div className="relative">
-              <p.icon size={22} className="text-amber-accent" />
-              <h3 className="mt-2 font-serif text-lg font-bold">{p.title}</h3>
-              <p className="text-xs text-cream-100/80">{p.sub}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-accent">
-                Explore Now <ArrowRight size={13} />
+      {/* 6. Trust */}
+      <section className="border-y border-coffee-100 bg-cream-100">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+          {trust.map((t) => (
+            <div key={t.title} className="flex gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-coffee-800 text-cream-50">
+                <t.icon size={18} />
               </span>
+              <div>
+                <h3 className="font-semibold text-coffee-900">{t.title}</h3>
+                <p className="mt-1 text-sm text-coffee-600">{t.text}</p>
+              </div>
             </div>
-          </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      </section>
 
-      {/* ===== Trust bar ===== */}
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 rounded-2xl border border-coffee-100 bg-cream-100/60 px-6 py-5">
-        {trustBar.map((t) => (
-          <div key={t.label} className="flex items-center gap-2 text-sm font-medium text-coffee-600">
-            <t.icon size={18} className="text-amber-accent" />
-            {t.label}
-          </div>
-        ))}
-      </div>
-
-      {/* ===== Global network CTA ===== */}
-      <section className="mt-6 flex flex-col items-center gap-4 rounded-2xl bg-coffee-900 px-6 py-12 text-center text-cream-50 sm:flex-row sm:justify-between sm:text-left">
-        <div className="flex items-center gap-4">
-          <Globe size={40} className="shrink-0 text-amber-accent" />
-          <div>
-            <h2 className="font-serif text-2xl font-bold">Join the global coffee community</h2>
-            <p className="mt-1 text-sm text-cream-100/80">
-              It&rsquo;s free to join — buy, sell and discover coffee in under a minute.
+      {/* 7. Sell */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+        <div className="flex flex-col gap-4 rounded-2xl border border-coffee-100 bg-cream-50 p-6 shadow-sm sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="text-xl font-bold text-coffee-900 sm:text-2xl">Sell on {brand.name}</h2>
+            <p className="mt-1 text-sm text-coffee-600">
+              Estates, roasters, brands and equipment suppliers: register your business, get verified, then list
+              products and receive bulk enquiries from buyers across India.
             </p>
           </div>
+          {user?.role === "SELLER" ? (
+            <Link to="/seller" className={`${primaryCta} shrink-0`}>
+              Go to seller dashboard
+            </Link>
+          ) : (
+            <Link to="/register/seller" className={`${primaryCta} shrink-0`}>
+              Sell on {brand.name} <ArrowRight size={16} />
+            </Link>
+          )}
         </div>
-        <Link
-          to="/register"
-          className="shrink-0 rounded-full bg-amber-accent px-8 py-3 text-sm font-semibold text-coffee-900 hover:bg-amber-accent/90"
-        >
-          Get Started Free
-        </Link>
       </section>
     </div>
   );

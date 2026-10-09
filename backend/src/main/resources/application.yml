@@ -16,10 +16,34 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+# Email: set SPRING_MAIL_HOST / SPRING_MAIL_PORT / SPRING_MAIL_USERNAME / SPRING_MAIL_PASSWORD
+# to send real mail. Without them, emails (reset links, notifications) are written to the log.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    mail:
+      enabled: false
 
 app:
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:5173}
+  # Base URL used in links inside emails/notifications.
+  frontend-url: ${APP_PUBLIC_URL:http://localhost:5173}
+  mail:
+    from: ${MAIL_FROM:no-reply@coffeehub.local}
+  payments:
+    # Simulated "pay online" button for development/demo. Keep false in production
+    # until a real payment gateway is integrated.
+    mock-enabled: ${PAYMENTS_MOCK_ENABLED:false}
   jwt:
     secret: ${JWT_SECRET:dev-only-change-this-secret-in-production-min-32-chars}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

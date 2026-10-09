@@ -23,6 +23,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Passes optional settings (e.g. SPRING_MAIL_*) straight through from .env when present.
+    env_file:
+      - path: .env
+        required: false
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-coffeehub}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-coffeehub}
@@ -30,6 +34,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-only-change-this-secret-in-production-min-32-chars}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:5173}
+      PAYMENTS_MOCK_ENABLED: ${PAYMENTS_MOCK_ENABLED:-true}
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@coffeehub.in}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-Admin@12345}
       SEED_ADMIN: ${SEED_ADMIN:-true}

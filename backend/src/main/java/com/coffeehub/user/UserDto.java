@@ -1,5 +1,7 @@
 package com.coffeehub.user;
 
+import java.time.Instant;
+
 public record UserDto(
         Long id,
         String name,
@@ -8,7 +10,12 @@ public record UserDto(
         Role role,
         boolean enabled,
         String referralCode,
-        int loyaltyPoints
+        int loyaltyPoints,
+        String companyName,
+        String gstNumber,
+        String businessType,
+        boolean emailVerified,
+        Instant createdAt
 ) {
     public static UserDto from(User user) {
         return new UserDto(
@@ -19,7 +26,12 @@ public record UserDto(
                 user.getRole(),
                 user.isEnabled(),
                 user.getReferralCode(),
-                user.getLoyaltyPoints()
+                user.getLoyaltyPoints(),
+                user.getCompanyName(),
+                user.getGstNumber(),
+                user.getBusinessType(),
+                user.isEmailVerified(),
+                user.getCreatedAt()
         );
     }
 }

@@ -1,21 +1,39 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, apiErrorMessage } from "../api/client";
-import type { Role, User } from "../types";
+import { api, apiErrorMessage, track } from "../api/client";
+import type { User, VendorType } from "../types";
 
-interface RegisterPayload {
+export interface BuyerRegistration {
   name: string;
   email: string;
+  phone: string;
   password: string;
-  phone?: string;
-  role: Role;
+  companyName?: string;
+  gstNumber?: string;
+  businessType?: string;
   referralCode?: string;
+}
+
+export interface SellerRegistration {
+  businessName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  password: string;
+  vendorType: VendorType;
+  website?: string;
+  addressLine: string;
+  city: string;
+  state: string;
+  pin: string;
 }
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (payload: RegisterPayload) => Promise<User>;
+  /** identifier is an email address or a mobile number. */
+  login: (identifier: string, password: string) => Promise<User>;
+  registerBuyer: (payload: BuyerRegistration) => Promise<User>;
+  registerSeller: (payload: SellerRegistration) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -58,9 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextUser);
   }
 
-  async function login(email: string, password: string) {
+  async function login(identifier: string, password: string) {
     try {
-      const res = await api.post("/api/auth/login", { email, password });
+      const res = await api.post("/api/auth/login", { identifier, password });
       persistSession(res.data.token, res.data.user);
       return res.data.user as User;
     } catch (error) {
@@ -68,10 +86,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function register(payload: RegisterPayload) {
+  async function registerBuyer(payload: BuyerRegistration) {
     try {
       const res = await api.post("/api/auth/register", payload);
       persistSession(res.data.token, res.data.user);
+      track("signup_completed", "buyer");
+      return res.data.user as User;
+    } catch (error) {
+      throw new Error(apiErrorMessage(error, "Registration failed"));
+    }
+  }
+
+  async function registerSeller(payload: SellerRegistration) {
+    try {
+      const res = await api.post("/api/auth/register-seller", payload);
+      persistSession(res.data.token, res.data.user);
+      track("vendor_registration");
       return res.data.user as User;
     } catch (error) {
       throw new Error(apiErrorMessage(error, "Registration failed"));
@@ -91,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, registerBuyer, registerSeller, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
