@@ -8,6 +8,12 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/coffeehub}
     username: ${SPRING_DATASOURCE_USERNAME:coffeehub}
     password: ${SPRING_DATASOURCE_PASSWORD:coffeehub}
+    hikari:
+      data-source-properties:
+        # Disable server-side prepared statements. Behind a transaction-mode connection
+        # pooler (Supabase pooler, PgBouncer, Neon) they are shared between sessions and
+        # fail with "cached plan must not change result type", notably during schema updates.
+        prepareThreshold: 0
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
