@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Ping backend
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://api.ojass.co/api/products)
+          status=$(curl -s -o /dev/null -w "%{http_code}" https://api.coffeehubglobal.com/api/products)
           echo "Backend responded with HTTP $status"
           if [ "$status" -ne 200 ]; then
             echo "::warning::Backend did not return 200 (got $status)"
