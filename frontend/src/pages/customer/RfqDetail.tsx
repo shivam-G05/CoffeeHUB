@@ -4,7 +4,7 @@ import { ArrowLeft, Trophy } from "lucide-react";
 import { api, apiErrorMessage, track } from "../../api/client";
 import { useBrand } from "../../context/BrandContext";
 import { useToast } from "../../context/ToastContext";
-import { formatDate, money } from "../../lib/format";
+import { formatDate, money, singularUnit } from "../../lib/format";
 import type { Quote, Rfq } from "../../types";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
@@ -258,7 +258,7 @@ export default function CustomerRfqDetail() {
                 {selected.vendorVerified && <VerifiedBadge compact />}
               </div>
               <p className="mt-1 text-sm text-coffee-700">
-                {money(selected.pricePerUnit)} / {rfq.unit} · Estimated total{" "}
+                {money(selected.pricePerUnit)} / {singularUnit(rfq.unit)} · Estimated total{" "}
                 <span className="font-semibold text-coffee-900">{money(selected.estimatedTotal)}</span>
                 {selected.leadTimeDays != null && <> · {selected.leadTimeDays} days lead time</>}
               </p>
@@ -361,7 +361,7 @@ export default function CustomerRfqDetail() {
             </div>
 
             <p className="mt-3 text-xs text-coffee-400">
-              Estimated total = price per {rfq.unit} × {rfq.quantity} {rfq.unit}, plus tax and shipping.
+              Estimated total = price per {singularUnit(rfq.unit)} × {rfq.quantity} {rfq.unit}, plus tax and shipping.
             </p>
           </>
         )}
@@ -370,7 +370,7 @@ export default function CustomerRfqDetail() {
       {selecting && (
         <Modal title="Select this supplier?" onClose={() => !busy && setSelecting(null)}>
           <p className="text-sm text-coffee-700">
-            You are selecting <span className="font-semibold text-coffee-900">{selecting.vendorName}</span> at {money(selecting.pricePerUnit)} / {rfq.unit}{" "}
+            You are selecting <span className="font-semibold text-coffee-900">{selecting.vendorName}</span> at {money(selecting.pricePerUnit)} / {singularUnit(rfq.unit)}{" "}
             (estimated total {money(selecting.estimatedTotal)}).
           </p>
           <p className="mt-2 text-sm text-coffee-500">

@@ -15,21 +15,29 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Seeds reference data the marketplace needs to be usable on first boot: the
- * Phase 1 category taxonomy, platform settings and placeholder policy pages.
+ * Phase 1 category taxonomy, platform settings, policy pages and FAQs.
  * Everything here is editable afterwards from the admin panel; rows that already
- * exist are never overwritten.
+ * exist are never overwritten, except seeded defaults nobody has changed yet
+ * (see {@link #upgradeUntouchedDefaults()}).
  */
 @Component
 @Order(3)
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
-    private static final String POLICY_PLACEHOLDER = """
+    /** Body earlier releases seeded for every policy; rows still holding it are replaced on boot. */
+    private static final String LEGACY_POLICY_PLACEHOLDER = """
             This page is a placeholder. The final wording must be reviewed by legal counsel and must match \
             the platform's actual payment, fulfilment and liability model before public launch.
 
@@ -37,6 +45,15 @@ public class DataSeeder implements CommandLineRunner {
             independent third-party vendors, not by CoffeeHub.
 
             Edit this page from Admin > Content.""";
+
+    private static final String BRAND = "CoffeeHub Global";
+
+    /** FAQ text earlier releases seeded, mapped to its current wording. */
+    private static final Map<String, String> LEGACY_FAQ_TEXT = Map.of(
+            "Who sells the products on CoffeeHub?", "Who sells the products on " + BRAND + "?",
+            "What does \"CoffeeHub Verified\" mean?", "What does \"" + BRAND + " Verified\" mean?",
+            "The seller's business documents were reviewed and approved by the CoffeeHub team before they could list products.",
+            "The seller's business documents were reviewed and approved by the " + BRAND + " team before they could list products.");
 
     private final CategoryRepository categoryRepository;
     private final PlatformSettingRepository settingRepository;
@@ -52,10 +69,59 @@ public class DataSeeder implements CommandLineRunner {
         if (contentRepository.count() == 0) {
             seedContent();
         }
+        upgradeUntouchedDefaults();
+    }
+
+    /**
+     * Earlier releases seeded a "CoffeeHub" brand name, placeholder policies and FAQs naming "CoffeeHub".
+     * Replace those only while they still hold exactly the seeded value, so admin edits are never lost.
+     */
+    private void upgradeUntouchedDefaults() {
+        settingRepository.findById(SettingsService.BRAND_NAME)
+                .filter(s -> "CoffeeHub".equals(s.getValue()))
+                .ifPresent(s -> {
+                    s.setValue(BRAND);
+                    settingRepository.save(s);
+                });
+
+        for (ContentBlock block : contentRepository.findAll()) {
+            boolean changed = false;
+            if (block.getType() == ContentBlock.Type.POLICY && LEGACY_POLICY_PLACEHOLDER.equals(block.getBody())) {
+                String body = policyBody(block.getSlug());
+                if (body != null) {
+                    block.setBody(body);
+                    changed = true;
+                }
+            } else if (block.getType() == ContentBlock.Type.FAQ) {
+                String newTitle = LEGACY_FAQ_TEXT.get(block.getTitle());
+                String newBody = LEGACY_FAQ_TEXT.get(block.getBody());
+                if (newTitle != null) {
+                    block.setTitle(newTitle);
+                    changed = true;
+                }
+                if (newBody != null) {
+                    block.setBody(newBody);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                block.setUpdatedAt(Instant.now());
+                contentRepository.save(block);
+            }
+        }
+    }
+
+    /** Final policy text bundled with the app, by slug; null if there is no file for it. */
+    private static String policyBody(String slug) {
+        try (InputStream in = DataSeeder.class.getResourceAsStream("/policies/" + slug + ".md")) {
+            return in == null ? null : new String(in.readAllBytes(), StandardCharsets.UTF_8).strip();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void seedSettings() {
-        setting(SettingsService.BRAND_NAME, "CoffeeHub", "Platform name shown across the site", true);
+        setting(SettingsService.BRAND_NAME, BRAND, "Platform name shown across the site", true);
         setting(SettingsService.BRAND_TAGLINE, "India's coffee marketplace", "Short positioning line", true);
         setting(SettingsService.SUPPORT_EMAIL, "support@coffeehub.in", "Shown on support and policy pages", true);
         setting(SettingsService.DEFAULT_COMMISSION_PERCENT, "8", "Commission % for categories without their own rate", false);
@@ -125,14 +191,14 @@ public class DataSeeder implements CommandLineRunner {
                     .type(ContentBlock.Type.POLICY)
                     .slug(Slugs.slugify(title))
                     .title(title)
-                    .body(POLICY_PLACEHOLDER)
+                    .body(policyBody(Slugs.slugify(title)))
                     .sortOrder(order++)
                     .build());
         }
-        faq(0, "Who sells the products on CoffeeHub?",
+        faq(0, "Who sells the products on " + BRAND + "?",
                 "Independent, verified vendors. Each product page shows who sells and ships the item.");
-        faq(1, "What does \"CoffeeHub Verified\" mean?",
-                "The seller's business documents were reviewed and approved by the CoffeeHub team before they could list products.");
+        faq(1, "What does \"" + BRAND + " Verified\" mean?",
+                "The seller's business documents were reviewed and approved by the " + BRAND + " team before they could list products.");
         faq(2, "How do I buy in bulk?",
                 "Use Post Requirement to describe what you need. We route it to relevant verified suppliers, and you compare their quotes side by side.");
         faq(3, "How do I become a seller?",

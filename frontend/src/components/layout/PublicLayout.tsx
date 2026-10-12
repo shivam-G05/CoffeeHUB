@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Coffee, Heart, Menu, ShoppingCart, User, X } from "lucide-react";
+import { Heart, LayoutDashboard, Menu, ShoppingCart, User, X } from "lucide-react";
+import Logo from "../ui/Logo";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useBrand } from "../../context/BrandContext";
@@ -38,31 +39,40 @@ export default function PublicLayout() {
 
   const accountLink = user ? dashboardHome(user.role) : "/login";
   const isBuyer = user?.role === "CUSTOMER";
+  const dashboardLabel = user?.role === "SELLER" ? "Seller Dashboard" : user?.role === "ADMIN" ? "Admin Dashboard" : null;
   const navLinks = [...staticLinks, ...categories.map((c) => ({ to: `/category/${c.slug}`, label: c.name }))];
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-coffee-100 bg-cream-50/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex shrink-0 items-center gap-2" onClick={closeMenu}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-coffee-800 text-cream-50">
-              <Coffee size={18} />
-            </span>
-            <span className="font-serif text-lg font-bold tracking-tight text-coffee-900">{brand.name}</span>
+          <Link to="/" className="flex shrink-0 items-center" onClick={closeMenu} aria-label={`${brand.name} home`}>
+            <Logo className="h-8 sm:h-10" />
           </Link>
 
           <SearchBar className="mx-auto hidden max-w-xl flex-1 md:block" />
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <NotificationBell />
-            <Link
-              to={accountLink}
-              className="flex flex-col items-center rounded-lg px-2 py-1 text-coffee-700 hover:bg-coffee-100/70"
-              title={user ? "My Dashboard" : "Sign in"}
-            >
-              <User size={20} />
-              <span className="hidden text-[10px] font-medium lg:block">{user ? "Account" : "Sign in"}</span>
-            </Link>
+            {dashboardLabel ? (
+              <Link
+                to={accountLink}
+                className="flex items-center gap-1.5 rounded-full bg-coffee-800 px-3 py-2 text-xs font-semibold text-cream-50 hover:bg-coffee-700 sm:text-sm"
+              >
+                <LayoutDashboard size={16} />
+                <span className="sm:hidden">Dashboard</span>
+                <span className="hidden sm:inline">{dashboardLabel}</span>
+              </Link>
+            ) : (
+              <Link
+                to={accountLink}
+                className="flex flex-col items-center rounded-lg px-2 py-1 text-coffee-700 hover:bg-coffee-100/70"
+                title={user ? "My Dashboard" : "Sign in"}
+              >
+                <User size={20} />
+                <span className="hidden text-[10px] font-medium lg:block">{user ? "Account" : "Sign in"}</span>
+              </Link>
+            )}
             {(!user || isBuyer) && (
               <>
                 <Link
@@ -152,7 +162,7 @@ export default function PublicLayout() {
                         onClick={closeMenu}
                         className="rounded-full bg-coffee-800 px-4 py-2 text-center text-sm font-semibold text-cream-50"
                       >
-                        My Dashboard
+                        {dashboardLabel ?? "My Dashboard"}
                       </Link>
                       <button
                         onClick={() => {
@@ -192,12 +202,7 @@ export default function PublicLayout() {
       <footer className="border-t border-coffee-100 bg-coffee-900 text-cream-100">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-5">
           <div className="sm:col-span-2">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-accent text-coffee-900">
-                <Coffee size={18} />
-              </span>
-              <p className="font-serif text-lg font-semibold text-cream-50">{brand.name}</p>
-            </div>
+            <Logo variant="light" className="h-12" />
             <p className="mt-3 max-w-sm text-sm text-coffee-200">
               {brand.tagline}. Discover verified coffee suppliers, buy coffee and equipment, and source in bulk by
               posting a requirement.

@@ -7,6 +7,7 @@ import { formatDate, label, money } from "../../lib/format";
 import type { Order, OrderItem, PostalAddress } from "../../types";
 import Button from "../../components/ui/Button";
 import { ErrorNote, SkeletonRows } from "../../components/ui/Common";
+import Logo from "../../components/ui/Logo";
 
 function AddressBlock({ title, address, name }: { title: string; address?: PostalAddress; name?: string }) {
   if (!address) return null;
@@ -89,8 +90,8 @@ export default function CustomerInvoice() {
           <div className="rounded-2xl border border-coffee-100 bg-white p-5 shadow-sm sm:p-8 print:rounded-none print:border-0 print:p-0 print:shadow-none">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-coffee-200 pb-4">
               <div>
-                <p className="text-2xl font-bold text-coffee-900">{brand.name}</p>
-                <p className="text-xs text-coffee-500">{brand.tagline}</p>
+                <Logo className="h-12" />
+                <p className="mt-1 text-xs text-coffee-500">{brand.tagline}</p>
               </div>
               <div className="text-left sm:text-right">
                 <h1 className="text-lg font-bold uppercase tracking-wide text-coffee-900">Tax Invoice</h1>

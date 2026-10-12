@@ -8,7 +8,7 @@ export default function ProtectedRoute({ allow }: { allow: Role[] }) {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-coffee-600">
-        Loading CoffeeHub…
+        Loading CoffeeHub Global…
       </div>
     );
   }

@@ -8,6 +8,7 @@ import { formatDate } from "../../lib/format";
 import { useSeo } from "../../lib/seo";
 import type { ContentBlock } from "../../types";
 import { EmptyState, ErrorNote, SkeletonRows } from "../../components/ui/Common";
+import RichText from "../../components/ui/RichText";
 
 export default function PolicyPage() {
   const { slug } = useParams();
@@ -60,7 +61,7 @@ export default function PolicyPage() {
           <>
             <h1 className="text-2xl font-bold text-coffee-900 sm:text-3xl">{policy.title}</h1>
             <p className="mt-1 text-xs text-coffee-400">Last updated {formatDate(policy.updatedAt)}</p>
-            <div className="mt-6 whitespace-pre-wrap break-words text-sm leading-relaxed text-coffee-800">{policy.body}</div>
+            <RichText text={policy.body ?? ""} className="mt-4 text-sm leading-relaxed text-coffee-800" />
           </>
         )}
       </article>

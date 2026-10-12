@@ -1,15 +1,15 @@
-# CoffeeHub
+# CoffeeHub Global
 
-> CoffeeHub (coffeehubglobal.com) is a multi-vendor coffee marketplace and B2B sourcing platform based in India. Buyers purchase coffee, coffee equipment and café supplies directly from verified suppliers, or post a bulk requirement (RFQ) and compare quotes from several suppliers.
+> CoffeeHub Global (coffeehubglobal.com) is a multi-vendor coffee marketplace and B2B sourcing platform based in India. Buyers purchase coffee, coffee equipment and café supplies directly from verified suppliers, or post a bulk requirement (RFQ) and compare quotes from several suppliers.
 
 Key facts:
 
-- Every seller is a verified business. Before a supplier can list products, the CoffeeHub team manually checks their GST certificate, PAN, bank proof and address proof (plus FSSAI for food products). Approved suppliers carry a "CoffeeHub Verified" badge.
-- Every new product listing is reviewed by the CoffeeHub team before it goes live.
+- Every seller is a verified business. Before a supplier can list products, the CoffeeHub Global team manually checks their GST certificate, PAN, bank proof and address proof (plus FSSAI for food products). Approved suppliers carry a "CoffeeHub Global Verified" badge.
+- Every new product listing is reviewed by the CoffeeHub Global team before it goes live.
 - Supplier types include coffee estates, green coffee suppliers, roasters, coffee brands, instant coffee manufacturers, equipment and accessories suppliers, packaging suppliers, contract manufacturers and distributors.
 - One cart can contain products from several suppliers; each supplier fulfils and ships its own part of the order and adds tracking details.
 - Prices are in Indian rupees (INR). Coffee listings carry structured details such as coffee type (Arabica/Robusta/blend), origin, estate, process, roast level, grade, crop year and minimum order quantity (MOQ).
-- Buyer protection: orders, payments and messages stay on the platform, and buyers can raise a dispute (not received, damaged, wrong item, quality or quantity issue) that the CoffeeHub team resolves.
+- Buyer protection: orders, payments and messages stay on the platform, and buyers can raise a dispute (not received, damaged, wrong item, quality or quantity issue) that the CoffeeHub Global team resolves.
 
 ## Shop
 
@@ -23,7 +23,7 @@ Key facts:
 
 ## Sell
 
-- [Sell on CoffeeHub](https://coffeehubglobal.com/register/seller): register a coffee business, upload verification documents and list products after approval.
+- [Sell on CoffeeHub Global](https://coffeehubglobal.com/register/seller): register a coffee business, upload verification documents and list products after approval.
 
 ## Help and policies
 

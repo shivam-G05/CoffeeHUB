@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { api, apiErrorMessage } from "../../api/client";
 import { useToast } from "../../context/ToastContext";
-import { formatDate, money } from "../../lib/format";
+import { formatDate, money, singularUnit } from "../../lib/format";
 import type { Quote, Rfq } from "../../types";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
@@ -206,7 +206,7 @@ export default function SellerRfqDetail() {
 
           <form onSubmit={submitQuote} className="mt-4">
             <fieldset disabled={!open || busy !== null} className="grid gap-4 sm:grid-cols-2">
-              <Field label={`Price per ${rfq.unit} (₹) *`}>
+              <Field label={`Price per ${singularUnit(rfq.unit)} (₹) *`}>
                 <Input required type="number" min="0.01" step="0.01" value={form.pricePerUnit} onChange={set("pricePerUnit")} />
               </Field>
               <Field label={`Minimum order quantity (${rfq.unit})`}>

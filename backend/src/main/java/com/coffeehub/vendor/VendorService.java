@@ -158,6 +158,9 @@ public class VendorService {
         auditService.log(user, "VENDOR_SUBMITTED", "Vendor", vendor.getId(), null);
         notificationService.notifyAdmins("VENDOR_SUBMITTED", "New vendor awaiting verification",
                 vendor.getBusinessName() + " submitted their documents for review.", "/admin/vendors/" + vendor.getId());
+        notificationService.notify(user, "VENDOR_VERIFICATION", "Verification request received",
+                "Thanks. Our team is reviewing your business documents and will notify you as soon as there is a decision.",
+                "/seller/verification");
         return profile(vendor, true);
     }
 
@@ -293,7 +296,7 @@ public class VendorService {
         auditService.log(admin, "VENDOR_STATUS_CHANGED", "Vendor", vendor.getId(),
                 previous + " -> " + target + (needsReason ? " (" + req.reason().trim() + ")" : ""));
         String body = switch (target) {
-            case APPROVED -> "Your business is now CoffeeHub Verified. You can submit products for approval.";
+            case APPROVED -> "Your business is now CoffeeHub Global Verified. You can submit products for approval.";
             case REJECTED -> "Your application was not approved: " + req.reason().trim() + ". You can update your details and resubmit.";
             case SUSPENDED -> "Your seller account has been suspended: " + req.reason().trim();
             default -> "Your application is now under review.";
@@ -310,6 +313,15 @@ public class VendorService {
         doc.setReviewNote(blankToNull(req.note()));
         doc.setReviewedAt(Instant.now());
         auditService.log(admin, "VENDOR_DOCUMENT_REVIEWED", "Vendor", vendorId, doc.getType() + " -> " + req.status());
+        if (req.status() == VendorDocument.Status.REJECTED) {
+            String label = doc.getType().label();
+            notificationService.notify(vendor.getUser(), "VENDOR_DOCUMENT_REJECTED",
+                    "Please re-upload your " + label,
+                    "Your " + label + " could not be accepted"
+                            + (doc.getReviewNote() != null ? ": " + doc.getReviewNote().replaceAll("[.!?]+$", "") : "")
+                            + ". Upload a corrected document from your verification page.",
+                    "/seller/verification");
+        }
         return profile(vendor, false);
     }
 
@@ -356,7 +368,7 @@ public class VendorService {
                 .forEach(d -> uploaded.add(d.getType()));
         for (DocumentType type : DocumentType.values()) {
             if (type.required() && !uploaded.contains(type)) {
-                missing.add(type.name().replace('_', ' ').toLowerCase() + " document");
+                missing.add(type.label());
             }
         }
         if (bankRepository.findByVendorId(vendor.getId()).isEmpty()) {

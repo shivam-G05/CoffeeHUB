@@ -22,7 +22,7 @@ export default function Cafes() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <h1 className="text-3xl font-bold text-coffee-900">Discover Cafés</h1>
-      <p className="mt-1 text-coffee-500">Find cafés listed on CoffeeHub across India.</p>
+      <p className="mt-1 text-coffee-500">Find cafés listed on CoffeeHub Global across India.</p>
 
       <div className="relative mt-6 max-w-xs">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-coffee-300" />

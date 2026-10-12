@@ -302,6 +302,10 @@ public class OrderService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Only shipped or delivered orders can be confirmed as received");
         }
         changeStatus(vendorOrder, OrderStatus.COMPLETED);
+        notificationService.notify(vendorOrder.getVendor().getUser(), "ORDER_COMPLETED",
+                "Order " + vendorOrder.getSubOrderNumber() + " was received by the buyer",
+                "The buyer confirmed delivery. The order is complete and its payout is now due for settlement.",
+                "/seller/orders/" + vendorOrder.getId());
         return toDto(vendorOrder.getOrder(), View.BUYER);
     }
 
@@ -402,7 +406,7 @@ public class OrderService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Refunds and disputes have their own actions; they cannot be set as a status directly");
         }
         if (target == OrderStatus.CANCELLED) {
-            cancel(vendorOrder, reason == null || reason.isBlank() ? "Cancelled by CoffeeHub" : reason.trim());
+            cancel(vendorOrder, reason == null || reason.isBlank() ? "Cancelled by CoffeeHub Global" : reason.trim());
         } else {
             changeStatus(vendorOrder, target);
         }

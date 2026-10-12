@@ -119,7 +119,7 @@ public class ProductService {
         boolean wasLive = product.getStatus().isLive() || product.getStatus() == ProductStatus.PENDING;
         apply(product, request);
         if (product.getStatus() == ProductStatus.SUSPENDED) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "This listing was suspended by CoffeeHub. Contact support to restore it.");
+            throw new ApiException(HttpStatus.BAD_REQUEST, "This listing was suspended by CoffeeHub Global. Contact support to restore it.");
         }
         // Content edits to a live listing go back through moderation; drafts and rejected listings stay editable drafts.
         product.setStatus(wasLive ? ProductStatus.PENDING : ProductStatus.DRAFT);
@@ -136,7 +136,7 @@ public class ProductService {
         }
         Vendor vendor = product.getVendor() != null ? product.getVendor() : vendorService.requireForUser(seller);
         if (vendor.getStatus() != VendorStatus.APPROVED) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Your business must be verified by CoffeeHub before you can submit products");
+            throw new ApiException(HttpStatus.FORBIDDEN, "Your business must be verified by CoffeeHub Global before you can submit products");
         }
         product.setVendor(vendor);
         assertReadyForReview(product);

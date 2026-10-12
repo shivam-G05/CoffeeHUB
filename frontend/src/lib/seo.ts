@@ -37,7 +37,7 @@ function absolute(url: string): string {
 }
 
 /** Sets title, description, canonical, social share tags, robots and optional JSON-LD while the calling page is mounted. */
-export function useSeo({ title, description, canonicalPath, jsonLd, image, noindex }: Seo, brandName = "CoffeeHub") {
+export function useSeo({ title, description, canonicalPath, jsonLd, image, noindex }: Seo, brandName = "CoffeeHub Global") {
   const json = jsonLd ? JSON.stringify(Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : null;
 
   useEffect(() => {

@@ -29,3 +29,11 @@ export function label(value?: string | null): string {
 export function place(city?: string | null, state?: string | null): string {
   return [city, state].filter(Boolean).join(", ");
 }
+
+const SINGULAR_UNITS: Record<string, string> = { units: "unit", tonnes: "tonne", bags: "bag", boxes: "box", litres: "litre" };
+
+/** Unit for "price per …" labels: "units" -> "unit", "bags" -> "bag"; kg, g and unknown units are unchanged. */
+export function singularUnit(unit?: string | null): string {
+  if (!unit) return "unit";
+  return SINGULAR_UNITS[unit.toLowerCase()] ?? unit;
+}

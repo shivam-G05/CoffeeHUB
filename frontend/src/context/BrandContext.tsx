@@ -9,7 +9,7 @@ interface Brand {
 
 // Defaults render immediately; the admin-configured values replace them once loaded,
 // so the platform can be renamed from Admin > Settings without a code change.
-const fallback: Brand = { name: "CoffeeHub", tagline: "India's coffee marketplace", supportEmail: "support@coffeehub.in" };
+const fallback: Brand = { name: "CoffeeHub Global", tagline: "India's coffee marketplace", supportEmail: "support@coffeehub.in" };
 
 const BrandContext = createContext<Brand>(fallback);
 

@@ -7,7 +7,8 @@ import { useBrand } from "../../context/BrandContext";
 import { useSeo } from "../../lib/seo";
 import type { Category, ContentBlock, Page, Product, VendorSummary } from "../../types";
 import SearchBar from "../../components/layout/SearchBar";
-import { EmptyState, ErrorNote, Img, SkeletonGrid } from "../../components/ui/Common";
+import { EmptyState, ErrorNote, SkeletonGrid } from "../../components/ui/Common";
+import CategoryArt from "../../components/ui/CategoryArt";
 import ProductCard from "../../components/ui/ProductCard";
 import { SupplierCard } from "./Suppliers";
 
@@ -177,7 +178,7 @@ export default function Home() {
                   to={`/category/${c.slug}`}
                   className="group overflow-hidden rounded-2xl border border-coffee-100 bg-cream-50 shadow-sm transition hover:shadow-md"
                 >
-                  <Img src={c.imageUrl} alt="" className="h-24 w-full sm:h-28" />
+                  <CategoryArt slug={c.slug} imageUrl={c.imageUrl} className="h-24 w-full sm:h-28" />
                   <p className="px-3 py-2.5 text-sm font-semibold text-coffee-900 group-hover:underline">{c.name}</p>
                 </Link>
               ))}

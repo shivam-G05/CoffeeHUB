@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useBrand } from "../../context/BrandContext";
 import NotificationBell from "./NotificationBell";
+import Logo from "../ui/Logo";
 
 export interface DashboardNavItem {
   to: string;
@@ -23,8 +24,8 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-cream-100">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-coffee-100 bg-cream-50 md:flex">
         <div className="border-b border-coffee-100 px-6 py-5">
-          <Link to="/" className="text-lg font-bold text-coffee-800">
-            ☕ {brand.name}
+          <Link to="/" className="inline-block" aria-label={`${brand.name} home`}>
+            <Logo className="h-9" />
           </Link>
           <p className="mt-1 text-xs font-medium uppercase tracking-wide text-coffee-400">{title}</p>
         </div>
@@ -55,8 +56,8 @@ export default function DashboardLayout({
 
       <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between gap-3 border-b border-coffee-100 bg-cream-50 px-4 py-2.5 sm:px-6">
-          <Link to="/" className="text-lg font-bold text-coffee-800 md:hidden">
-            ☕ {brand.name}
+          <Link to="/" className="md:hidden" aria-label={`${brand.name} home`}>
+            <Logo className="h-8" />
           </Link>
           <Link to="/" className="hidden text-sm font-medium text-coffee-500 hover:text-coffee-800 md:block">
             ← Back to marketplace

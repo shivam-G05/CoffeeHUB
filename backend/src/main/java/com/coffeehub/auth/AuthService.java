@@ -3,6 +3,7 @@ package com.coffeehub.auth;
 import com.coffeehub.auth.AuthRepositories.AuthTokenRepository;
 import com.coffeehub.auth.AuthRepositories.LoginEventRepository;
 import com.coffeehub.auth.dto.AuthResponse;
+import com.coffeehub.content.SettingsService;
 import com.coffeehub.auth.dto.LoginRequest;
 import com.coffeehub.auth.dto.RegisterRequest;
 import com.coffeehub.auth.dto.RegisterSellerRequest;
@@ -59,6 +60,7 @@ public class AuthService {
     private final UserDetailsServiceImpl userLookup;
     private final VendorService vendorService;
     private final EmailService emailService;
+    private final SettingsService settingsService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -144,7 +146,7 @@ public class AuthService {
     public void forgotPassword(String email) {
         userRepository.findByEmail(email.trim().toLowerCase()).filter(User::isEnabled).ifPresent(user -> {
             String token = issueToken(user, AuthToken.Type.PASSWORD_RESET, RESET_TOKEN_TTL);
-            emailService.send(user.getEmail(), "Reset your CoffeeHub password",
+            emailService.send(user.getEmail(), "Reset your " + brandName() + " password",
                     "Use this link to choose a new password. It expires in 1 hour.\n\n"
                             + frontendUrl + "/reset-password?token=" + token
                             + "\n\nIf you didn't ask for this, you can ignore this email.");
@@ -182,10 +184,14 @@ public class AuthService {
         }
     }
 
+    private String brandName() {
+        return settingsService.get(SettingsService.BRAND_NAME, "CoffeeHub Global");
+    }
+
     private void sendVerificationEmail(User user) {
         String token = issueToken(user, AuthToken.Type.EMAIL_VERIFICATION, VERIFY_TOKEN_TTL);
-        emailService.send(user.getEmail(), "Verify your CoffeeHub email",
-                "Welcome to CoffeeHub. Confirm your email address:\n\n" + frontendUrl + "/verify-email?token=" + token);
+        emailService.send(user.getEmail(), "Verify your " + brandName() + " email",
+                "Welcome to " + brandName() + ". Confirm your email address:\n\n" + frontendUrl + "/verify-email?token=" + token);
     }
 
     private String issueToken(User user, AuthToken.Type type, Duration ttl) {

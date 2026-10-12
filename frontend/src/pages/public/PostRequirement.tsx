@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { api, apiErrorMessage, track } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useBrand } from "../../context/BrandContext";
+import { singularUnit } from "../../lib/format";
 import { useSeo } from "../../lib/seo";
 import type { Category, Product, Rfq } from "../../types";
 import Button from "../../components/ui/Button";
@@ -196,7 +197,7 @@ export default function PostRequirement() {
                   ))}
                 </Select>
               </Field>
-              <Field label={`Target price per ${form.unit} (₹, optional)`}>
+              <Field label={`Target price per ${singularUnit(form.unit)} (₹, optional)`}>
                 <Input type="number" min={0} step="any" inputMode="decimal" value={form.targetPrice} onChange={(e) => set("targetPrice", e.target.value)} />
               </Field>
             </div>

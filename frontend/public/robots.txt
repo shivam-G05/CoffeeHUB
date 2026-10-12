@@ -1,4 +1,4 @@
-# CoffeeHub — https://coffeehubglobal.com
+# CoffeeHub Global — https://coffeehubglobal.com
 # Public marketplace pages are open to search engines and AI answer engines.
 # Account dashboards, cart and checkout are private and have no search value.
 

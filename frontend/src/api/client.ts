@@ -15,9 +15,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// The API host sleeps when idle and answers with network errors or 502-504 while it wakes up.
+// Read-only requests are safe to repeat, so retry those a couple of times before showing an error.
+const RETRY_DELAYS_MS = [1500, 4000];
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const config = error.config as (typeof error.config & { _retryCount?: number }) | undefined;
+    const status: number | undefined = error.response?.status;
+    const transient = !error.response || status === 502 || status === 503 || status === 504;
+    if (config && (config.method ?? "get").toLowerCase() === "get" && transient && !axios.isCancel(error)) {
+      const attempt = config._retryCount ?? 0;
+      if (attempt < RETRY_DELAYS_MS.length) {
+        config._retryCount = attempt + 1;
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+        return api.request(config);
+      }
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem("coffeehub_token");
       localStorage.removeItem("coffeehub_user");
@@ -31,7 +46,10 @@ api.interceptors.response.use(
 
 export function apiErrorMessage(error: unknown, fallback = "Something went wrong"): string {
   if (axios.isAxiosError(error)) {
-    return error.response?.data?.message ?? fallback;
+    if (!error.response) {
+      return fallback && `${fallback}: the marketplace could not be reached. Check your connection and refresh the page.`;
+    }
+    return error.response.data?.message ?? fallback;
   }
   return fallback;
 }
