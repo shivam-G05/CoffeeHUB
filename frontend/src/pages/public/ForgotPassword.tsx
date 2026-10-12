@@ -15,7 +15,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useSeo({ title: "Forgot password" }, brand.name);
+  useSeo({ title: "Forgot password", noindex: true }, brand.name);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

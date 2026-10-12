@@ -7,7 +7,6 @@ import { useBrand } from "../../context/BrandContext";
 import { useSeo } from "../../lib/seo";
 import type { Category, ContentBlock, Page, Product, VendorSummary } from "../../types";
 import SearchBar from "../../components/layout/SearchBar";
-import heroImage from "../../components/layout/beans.jpg";
 import { EmptyState, ErrorNote, Img, SkeletonGrid } from "../../components/ui/Common";
 import ProductCard from "../../components/ui/ProductCard";
 import { SupplierCard } from "./Suppliers";
@@ -152,7 +151,14 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <img src={heroImage} alt="Roasted coffee beans" decoding="async" className="hidden h-80 w-full rounded-2xl object-cover lg:block" />
+          <img
+            src="/images/hero-beans.webp"
+            alt="Roasted coffee beans"
+            width={590}
+            height={393}
+            fetchPriority="high"
+            className="hidden h-80 w-full rounded-2xl object-cover lg:block"
+          />
         </div>
       </section>
 

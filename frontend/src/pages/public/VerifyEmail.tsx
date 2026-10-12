@@ -17,7 +17,7 @@ export default function VerifyEmail() {
   const [error, setError] = useState<string | null>(token ? null : "This verification link is incomplete. Open the link from your email again.");
   const started = useRef(false);
 
-  useSeo({ title: "Verify email" }, brand.name);
+  useSeo({ title: "Verify email", noindex: true }, brand.name);
 
   useEffect(() => {
     // The token is single-use: guard against the effect running twice in development.

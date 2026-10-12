@@ -134,7 +134,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
 export function Img({ src, alt, className = "" }: { src?: string | null; alt: string; className?: string }) {
   const url = fileUrl(src);
   if (!url) {
-    return <div className={`flex items-center justify-center bg-coffee-100 text-xs text-coffee-400 ${className}`}>No image</div>;
+    return <div className={`flex items-center justify-center bg-coffee-100 text-xs text-coffee-600 ${className}`}>No image</div>;
   }
   return <img src={url} alt={alt} loading="lazy" decoding="async" className={`object-cover ${className}`} />;
 }

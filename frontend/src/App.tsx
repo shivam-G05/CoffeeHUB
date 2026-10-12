@@ -77,7 +77,7 @@ const AdminConversations = lazy(() => import("./pages/admin/Conversations"));
 const AdminCafes = lazy(() => import("./pages/admin/Cafes"));
 
 function PageLoading() {
-  return <div className="flex min-h-[40vh] items-center justify-center text-sm text-coffee-400">Loading…</div>;
+  return <div className="flex min-h-[40vh] items-center justify-center text-sm text-coffee-500">Loading…</div>;
 }
 
 function Lazy() {

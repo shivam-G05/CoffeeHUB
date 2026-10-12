@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Coffee, Heart, Menu, ShoppingCart, User, X } from "lucide-react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -131,14 +130,8 @@ export default function PublicLayout() {
           </div>
         </nav>
 
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t border-coffee-100 md:hidden"
-            >
+        {menuOpen && (
+            <div className="animate-menu-in overflow-hidden border-t border-coffee-100 md:hidden">
               <div className="flex flex-col gap-1 px-4 py-4">
                 <SearchBar className="mb-2" onNavigate={closeMenu} />
                 {navLinks.map((link) => (
@@ -186,12 +179,13 @@ export default function PublicLayout() {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </header>
 
-      <main className="flex-1" key={location.pathname}>
+      {/* At least a screen tall so the footer always starts below the fold: otherwise it jumps (layout shift)
+          whenever a page's content arrives taller or shorter than its loading placeholder. */}
+      <main className="min-h-screen flex-1" key={location.pathname}>
         <Outlet />
       </main>
 

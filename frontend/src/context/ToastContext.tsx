@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, XCircle, Info, X } from "lucide-react";
 
 type ToastType = "success" | "error" | "info";
@@ -49,26 +48,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex flex-col items-center gap-2 px-4 sm:items-end sm:right-4 sm:left-auto">
-        <AnimatePresence>
-          {toasts.map((t) => {
-            const Icon = icons[t.type];
-            return (
-              <motion.div
-                key={t.id}
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`pointer-events-auto flex max-w-sm items-start gap-2 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${styles[t.type]}`}
-              >
-                <Icon size={18} className="mt-0.5 shrink-0" />
-                <span className="flex-1">{t.message}</span>
-                <button onClick={() => dismiss(t.id)} className="shrink-0 opacity-70 hover:opacity-100">
-                  <X size={16} />
-                </button>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+        {toasts.map((t) => {
+          const Icon = icons[t.type];
+          return (
+            <div
+              key={t.id}
+              role={t.type === "error" ? "alert" : "status"}
+              className={`pointer-events-auto flex max-w-sm animate-toast-in items-start gap-2 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${styles[t.type]}`}
+            >
+              <Icon size={18} className="mt-0.5 shrink-0" />
+              <span className="flex-1">{t.message}</span>
+              <button onClick={() => dismiss(t.id)} aria-label="Dismiss notification" className="shrink-0 opacity-70 hover:opacity-100">
+                <X size={16} />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </ToastContext.Provider>
   );

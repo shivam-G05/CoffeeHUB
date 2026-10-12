@@ -2,13 +2,93 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Coffee marketplace: verified suppliers, green and roasted coffee, equipment, and B2B sourcing by quote." />
-    <title>CoffeeHub</title>
+    <title>India's coffee marketplace | CoffeeHub</title>
+    <meta name="description" content="CoffeeHub is a multi-vendor coffee marketplace in India: buy green and roasted coffee, espresso machines, grinders and café supplies from verified suppliers, or post a bulk requirement and compare quotes." />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="theme-color" content="#2c1810" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CoffeeHub" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:title" content="CoffeeHub — India's coffee marketplace" />
+    <meta property="og:description" content="Buy coffee, equipment and café supplies from verified suppliers, or post a bulk requirement and compare quotes." />
+    <meta property="og:image" content="https://coffeehubglobal.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="CoffeeHub — the coffee marketplace for verified suppliers" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CoffeeHub — India's coffee marketplace" />
+    <meta name="twitter:description" content="Buy coffee, equipment and café supplies from verified suppliers, or post a bulk requirement and compare quotes." />
+    <meta name="twitter:image" content="https://coffeehubglobal.com/og-image.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Headline font loads without blocking first paint; display=optional avoids a late font swap shifting the layout. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=optional" /></noscript>
+    <!-- The homepage hero image (the LCP element) is only shown from the lg breakpoint up. -->
+    <link rel="preload" as="image" href="/images/hero-beans.webp" type="image/webp" fetchpriority="high" media="(min-width: 1024px)" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://coffeehubglobal.com/#organization",
+            "name": "CoffeeHub",
+            "url": "https://coffeehubglobal.com/",
+            "logo": "https://coffeehubglobal.com/logo-512.png",
+            "description": "Multi-vendor coffee marketplace and B2B sourcing platform in India for green coffee, roasted coffee, instant coffee, coffee equipment, accessories and café supplies from verified suppliers.",
+            "areaServed": "IN"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://coffeehubglobal.com/#website",
+            "name": "CoffeeHub",
+            "url": "https://coffeehubglobal.com/",
+            "inLanguage": "en-IN",
+            "publisher": { "@id": "https://coffeehubglobal.com/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": { "@type": "EntryPoint", "urlTemplate": "https://coffeehubglobal.com/products?q={search_term_string}" },
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width:48rem;margin:2rem auto;padding:0 1rem;font-family:system-ui,sans-serif;color:#2c1810">
+        <h1>CoffeeHub — India's coffee marketplace</h1>
+        <p>CoffeeHub is a multi-vendor marketplace where buyers purchase coffee and coffee equipment directly from verified suppliers. Every seller's business documents (GST, PAN, bank and address proof) are checked by the CoffeeHub team before they can list products.</p>
+        <h2>What you can buy</h2>
+        <ul>
+          <li>Coffee: green coffee, roasted coffee and instant coffee from estates, roasters and brands</li>
+          <li>Equipment: espresso machines, coffee grinders, brewers and vending machines</li>
+          <li>Accessories: French presses, pour-over drippers, filters, tampers and brewing tools</li>
+          <li>Business supplies: packaging, private label and contract manufacturing</li>
+        </ul>
+        <h2>Bulk and B2B sourcing</h2>
+        <p>Businesses can post a requirement (product, quantity, target price and delivery location), receive quotes from several verified suppliers and compare them side by side before choosing one.</p>
+        <p>
+          <a href="/products">Browse the marketplace</a> ·
+          <a href="/suppliers">Verified suppliers</a> ·
+          <a href="/post-requirement">Post a requirement</a> ·
+          <a href="/register/seller">Sell on CoffeeHub</a> ·
+          <a href="/help">Help &amp; FAQs</a>
+        </p>
+        <p>Please enable JavaScript to use the full site.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

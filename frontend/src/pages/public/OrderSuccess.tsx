@@ -36,7 +36,7 @@ export default function OrderSuccess() {
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
-  useSeo({ title: "Order placed" }, brand.name);
+  useSeo({ title: "Order placed", noindex: true }, brand.name);
 
   useEffect(() => {
     api

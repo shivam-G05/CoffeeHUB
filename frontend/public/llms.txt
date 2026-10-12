@@ -1,0 +1,40 @@
+# CoffeeHub
+
+> CoffeeHub (coffeehubglobal.com) is a multi-vendor coffee marketplace and B2B sourcing platform based in India. Buyers purchase coffee, coffee equipment and café supplies directly from verified suppliers, or post a bulk requirement (RFQ) and compare quotes from several suppliers.
+
+Key facts:
+
+- Every seller is a verified business. Before a supplier can list products, the CoffeeHub team manually checks their GST certificate, PAN, bank proof and address proof (plus FSSAI for food products). Approved suppliers carry a "CoffeeHub Verified" badge.
+- Every new product listing is reviewed by the CoffeeHub team before it goes live.
+- Supplier types include coffee estates, green coffee suppliers, roasters, coffee brands, instant coffee manufacturers, equipment and accessories suppliers, packaging suppliers, contract manufacturers and distributors.
+- One cart can contain products from several suppliers; each supplier fulfils and ships its own part of the order and adds tracking details.
+- Prices are in Indian rupees (INR). Coffee listings carry structured details such as coffee type (Arabica/Robusta/blend), origin, estate, process, roast level, grade, crop year and minimum order quantity (MOQ).
+- Buyer protection: orders, payments and messages stay on the platform, and buyers can raise a dispute (not received, damaged, wrong item, quality or quantity issue) that the CoffeeHub team resolves.
+
+## Shop
+
+- [Marketplace](https://coffeehubglobal.com/products): all live products, with filters for category, price, supplier location, rating, coffee origin, process and roast level. Search with `?q=`, e.g. https://coffeehubglobal.com/products?q=arabica
+- [Verified suppliers](https://coffeehubglobal.com/suppliers): directory of approved coffee businesses with location, ratings and response time.
+- [Compare machines](https://coffeehubglobal.com/products/compare): side-by-side comparison of coffee machines.
+
+## Bulk sourcing (B2B)
+
+- [Post a requirement](https://coffeehubglobal.com/post-requirement): describe the product, quantity, target price, delivery location and date; verified suppliers send quotes (price per unit, MOQ, lead time, GST, shipping, sample cost) that the buyer compares side by side before selecting one.
+
+## Sell
+
+- [Sell on CoffeeHub](https://coffeehubglobal.com/register/seller): register a coffee business, upload verification documents and list products after approval.
+
+## Help and policies
+
+- [Help & FAQs](https://coffeehubglobal.com/help)
+- [Buyer Protection](https://coffeehubglobal.com/policies/buyer-protection)
+- [Refund & Cancellation](https://coffeehubglobal.com/policies/refund-cancellation)
+- [Shipping Policy](https://coffeehubglobal.com/policies/shipping-policy)
+- [Seller Terms](https://coffeehubglobal.com/policies/seller-terms)
+- [Terms & Conditions](https://coffeehubglobal.com/policies/terms-conditions)
+- [Privacy Policy](https://coffeehubglobal.com/policies/privacy-policy)
+
+## Optional
+
+- [Sitemap](https://api.coffeehubglobal.com/sitemap.xml): every live product, supplier, category and policy page.

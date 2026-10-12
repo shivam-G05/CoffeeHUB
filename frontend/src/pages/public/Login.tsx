@@ -19,7 +19,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const from = (location.state as { from?: string } | null)?.from;
 
-  useSeo({ title: "Log in" }, brand.name);
+  useSeo({ title: "Log in", noindex: true }, brand.name);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

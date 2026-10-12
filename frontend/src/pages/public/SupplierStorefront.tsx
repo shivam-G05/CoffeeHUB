@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Award, Bookmark, CalendarDays, Clock, Globe, MapPin, MessageSquare } from "lucide-react";
-import { api, apiErrorMessage, track } from "../../api/client";
+import { api, apiErrorMessage, fileUrl, track } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useBrand } from "../../context/BrandContext";
 import { useToast } from "../../context/ToastContext";
 import { VENDOR_TYPES } from "../../lib/constants";
 import { formatDate, place } from "../../lib/format";
-import { useSeo } from "../../lib/seo";
+import { breadcrumbJsonLd, useSeo } from "../../lib/seo";
 import type { Page, Product, Review, Storefront, VendorSummary } from "../../types";
 import { ReviewList } from "../../components/reviews/ReviewSection";
 import Button from "../../components/ui/Button";
@@ -103,6 +103,30 @@ export default function SupplierStorefront() {
       title: vendor?.businessName ?? "Supplier",
       description: vendor ? store?.about || `${vendor.businessName}: verified supplier on ${brand.name}.` : undefined,
       canonicalPath: slug ? `/suppliers/${slug}` : undefined,
+      image: vendor?.logoUrl ? fileUrl(vendor.logoUrl) : undefined,
+      jsonLd: vendor
+        ? [
+            {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: vendor.businessName,
+              url: `${window.location.origin}/suppliers/${vendor.slug}`,
+              ...(vendor.logoUrl ? { logo: fileUrl(vendor.logoUrl) } : {}),
+              ...(store?.about ? { description: store.about } : {}),
+              ...(store?.website ? { sameAs: [store.website] } : {}),
+              ...(vendor.city || vendor.state
+                ? { address: { "@type": "PostalAddress", addressLocality: vendor.city, addressRegion: vendor.state, addressCountry: "IN" } }
+                : {}),
+              ...(vendor.reviewCount > 0
+                ? { aggregateRating: { "@type": "AggregateRating", ratingValue: vendor.avgRating, reviewCount: vendor.reviewCount } }
+                : {}),
+            },
+            breadcrumbJsonLd([
+              { name: "Suppliers", path: "/suppliers" },
+              { name: vendor.businessName, path: `/suppliers/${vendor.slug}` },
+            ]),
+          ]
+        : undefined,
     },
     brand.name,
   );

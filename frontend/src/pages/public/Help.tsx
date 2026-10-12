@@ -19,6 +19,19 @@ export default function Help() {
       title: "Help & FAQs",
       description: `Answers to common questions about buying, selling and sourcing on ${brand.name}.`,
       canonicalPath: "/help",
+      jsonLd: faqs?.some((f) => f.body)
+        ? {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faqs
+              .filter((f) => f.body)
+              .map((f) => ({
+                "@type": "Question",
+                name: f.title,
+                acceptedAnswer: { "@type": "Answer", text: f.body },
+              })),
+          }
+        : undefined,
     },
     brand.name,
   );
@@ -35,7 +48,7 @@ export default function Help() {
       <PageHeader title="Help & FAQs" subtitle={`How buying, selling and sourcing work on ${brand.name}.`} />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_18rem]">
-        <section className="min-w-0" aria-label="Frequently asked questions">
+        <section className="min-h-[22.25rem] min-w-0" aria-label="Frequently asked questions">
           {error ? (
             <ErrorNote>{error}</ErrorNote>
           ) : faqs === null ? (

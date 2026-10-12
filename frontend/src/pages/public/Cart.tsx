@@ -19,7 +19,7 @@ export default function Cart() {
   const [loaded, setLoaded] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  useSeo({ title: "Cart" }, brand.name);
+  useSeo({ title: "Cart", noindex: true }, brand.name);
 
   // Prices and stock may have changed since the cart was last fetched.
   useEffect(() => {

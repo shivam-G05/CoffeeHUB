@@ -17,7 +17,7 @@ export default function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useSeo({ title: "Set a new password" }, brand.name);
+  useSeo({ title: "Set a new password", noindex: true }, brand.name);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

@@ -7,7 +7,7 @@ import { useBrand } from "../../context/BrandContext";
 import { useCart } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import { label, money, place } from "../../lib/format";
-import { useSeo } from "../../lib/seo";
+import { breadcrumbJsonLd, useSeo } from "../../lib/seo";
 import type { AttributeDef, Category, Conversation, ConversationContext, Product } from "../../types";
 import ReviewSection from "../../components/reviews/ReviewSection";
 import Badge from "../../components/ui/Badge";
@@ -158,8 +158,17 @@ export default function ProductDetail() {
       title: product?.name ?? "Product",
       description: product ? product.description || `${product.name} from ${sellerName} on ${brand.name}.` : undefined,
       canonicalPath: product ? productPath(product) : undefined,
+      image: images[0] ? fileUrl(images[0]) : undefined,
       jsonLd: product
-        ? {
+        ? [
+          breadcrumbJsonLd([
+            { name: "Marketplace", path: "/products" },
+            ...(product.categorySlug && product.categoryName
+              ? [{ name: product.categoryName, path: `/category/${product.categorySlug}` }]
+              : []),
+            { name: product.name, path: productPath(product) },
+          ]),
+          {
             "@context": "https://schema.org",
             "@type": "Product",
             name: product.name,
@@ -177,7 +186,8 @@ export default function ProductDetail() {
             ...(product.reviewCount > 0
               ? { aggregateRating: { "@type": "AggregateRating", ratingValue: product.avgRating, reviewCount: product.reviewCount } }
               : {}),
-          }
+          },
+        ]
         : undefined,
     },
     brand.name,

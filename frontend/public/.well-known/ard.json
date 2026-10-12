@@ -1,0 +1,28 @@
+{
+  "entries": [
+    {
+      "identifier": "urn:air:coffeehubglobal.com:site:marketplace-guide",
+      "displayName": "CoffeeHub marketplace guide",
+      "type": "text/markdown",
+      "url": "https://coffeehubglobal.com/llms.txt",
+      "description": "How the CoffeeHub coffee marketplace works: verified suppliers, product categories, search URLs, bulk requirement (RFQ) sourcing and buyer policies.",
+      "tags": ["coffee", "marketplace", "b2b", "india", "suppliers"],
+      "representativeQueries": [
+        "where can I buy green coffee beans in bulk from verified suppliers in India",
+        "how do I get quotes from multiple coffee roasters for a bulk order",
+        "which coffee marketplace verifies its sellers"
+      ]
+    },
+    {
+      "identifier": "urn:air:coffeehubglobal.com:site:sitemap",
+      "displayName": "CoffeeHub sitemap",
+      "type": "application/xml",
+      "url": "https://api.coffeehubglobal.com/sitemap.xml",
+      "description": "Every live product, verified supplier, category and policy page on CoffeeHub.",
+      "representativeQueries": [
+        "list all coffee products on CoffeeHub",
+        "list verified coffee suppliers on CoffeeHub"
+      ]
+    }
+  ]
+}

@@ -93,7 +93,7 @@ export default function Checkout() {
   const [error, setError] = useState<string | null>(null);
   const placed = useRef(false);
 
-  useSeo({ title: "Checkout" }, brand.name);
+  useSeo({ title: "Checkout", noindex: true }, brand.name);
 
   function applySaved(address: Address) {
     setSavedId(String(address.id));

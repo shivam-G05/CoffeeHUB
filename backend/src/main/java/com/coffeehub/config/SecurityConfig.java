@@ -76,6 +76,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/sitemap.xml").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/products/**", "/api/cafes/**", "/api/reviews", "/api/reviews/**",
                                 "/api/categories/**", "/api/suppliers/**", "/api/search",
